@@ -18,7 +18,6 @@ var BABYLON = BABYLON || {};
 		this._scene = scene;
 
 		this._refCount = 0;
-
 	};
 
 	BABYLON.RenderPass.prototype.incRefCount = function () {
