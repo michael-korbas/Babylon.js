@@ -15,7 +15,24 @@ var BABYLON = BABYLON || {};
 		this._renderTexture.onBeforeRender = beforeRender;
 		this._renderTexture.onAfterRender = afterRender;
 
-		scene.customRenderTargets.push(this._renderTexture);
+		this._refCount = 0;
+
+	};
+
+	BABYLON.RenderPass.prototype.incRefCount = function () {
+	    if (this._refCount == 0) {
+	        scene.customRenderTargets.push(this._renderTexture);
+	    }
+
+	    this._refCount++;
+	};
+
+	BABYLON.RenderPass.prototype.decRefCount = function () {
+	    this._refCount--;
+
+	    if (this._refCount <= 0) {
+	        scene.customRenderTargets.splice(scene.customRenderTargets.indexOf(this._renderTexture), 1);
+	    }
 	};
 
 	BABYLON.RenderPass.prototype.setRenderList = function (renderList) {

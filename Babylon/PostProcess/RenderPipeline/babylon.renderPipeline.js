@@ -19,6 +19,8 @@ var BABYLON = BABYLON || {};
 	};
 
 	BABYLON.RenderPipeline.prototype.enableEffect = function (renderEffectName, cameras) {
+	    cameras = BABYLON.Tools.MakeArray(cameras || this._cameras);
+
 		var renderEffects = this._renderEffects[renderEffectName];
 
 		if (!renderEffects) {
@@ -29,6 +31,8 @@ var BABYLON = BABYLON || {};
 	};
 
 	BABYLON.RenderPipeline.prototype.disableEffect = function (renderEffectName, cameras) {
+	    cameras = BABYLON.Tools.MakeArray(cameras || this._cameras);
+
 		var renderEffects = this._renderEffects[renderEffectName];
 
 		if (!renderEffects) {
@@ -41,7 +45,7 @@ var BABYLON = BABYLON || {};
 	BABYLON.RenderPipeline.prototype.attachCameras = function (cameras, unique) {
 		cameras = BABYLON.Tools.MakeArray(cameras || this._cameras);
 		
-		var indicesToDelete = []
+		var indicesToDelete = [];
 
 		for (var i = 0; i < cameras.length; i++) {
 			if (this._cameras.indexOf(cameras[i]) == -1) {
@@ -75,8 +79,6 @@ var BABYLON = BABYLON || {};
 
 	BABYLON.RenderPipeline.prototype.enableDisplayOnlyPass = function (passName, cameras) {
 		cameras = BABYLON.Tools.MakeArray(cameras || this._cameras);
-		
-		console.log(cameras);
 
 		var pass = null;
 
