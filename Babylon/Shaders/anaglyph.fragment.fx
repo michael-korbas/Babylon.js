@@ -16,5 +16,5 @@ void main(void)
     vec4 rightFrag = texture2D(rightSampler, vUV);
     rightFrag = vec4(rightFrag.r, 1.0, 1.0, 1.0);
 
-    gl_FragColor = vec4(rightFrag.r, leftFrag.g, leftFrag.b, 1.0);
+    gl_FragColor = vec4(rightFrag.rgb * leftFrag.rgb, 1.0);
 }
