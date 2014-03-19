@@ -109,15 +109,15 @@ var BABYLON = BABYLON || {};
 	};
 
 	BABYLON.RenderPipeline.prototype.disableDisplayOnlyPass = function (cameras) {
-		cameras = BABYLON.Tools.MakeArray(cameras || this._cameras);
+	    cameras = BABYLON.Tools.MakeArray(cameras || this._cameras);
+
+		for (var i = 0; i < cameras.length; i++) {
+		    this._renderEffectsPasses[cameras[i].name] = this._renderEffectsPasses[cameras[i].name] || new BABYLON.RenderEffect(this._engine, BABYLON.RenderPipeline.PASS_EFFECT_NAME, "BABYLON.DisplayPassPostProcess", 1.0);
+		    this._renderEffectsPasses[cameras[i].name].disable(cameras[i]);
+		}
 
 		for (var renderEffectName in this._renderEffects) {
 			this._renderEffects[renderEffectName].enable(cameras);
-		}
-
-		for (var i = 0; i < cameras.length; i++) {
-			this._renderEffectsPasses[cameras[i].name] = this._renderEffectsPasses[cameras[i].name] || new BABYLON.RenderEffect(this._engine, BABYLON.RenderPipeline.PASS_EFFECT_NAME, "BABYLON.DisplayPassPostProcess", 1.0);
-			this._renderEffectsPasses[cameras[i].name].disable(cameras[i]);
 		}
 	};
 
