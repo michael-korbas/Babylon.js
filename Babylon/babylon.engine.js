@@ -44,7 +44,7 @@ var BABYLON = BABYLON || {};
 
         // Extensions
         this._caps.standardDerivatives = (this._gl.getExtension('OES_standard_derivatives') !== null);
-        this._caps.s3tc = this._gl.getExtension('WEBGL_compressed_texture_s3tc') ;
+        this._caps.s3tc = this._gl.getExtension('WEBGL_compressed_texture_s3tc');
         this._caps.textureFloat = (this._gl.getExtension('OES_texture_float') !== null);        
         this._caps.textureAnisotropicFilterExtension = this._gl.getExtension('EXT_texture_filter_anisotropic') || this._gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic') || this._gl.getExtension('MOZ_EXT_texture_filter_anisotropic');
         this._caps.maxAnisotropy = this._caps.textureAnisotropicFilterExtension ? this._gl.getParameter(this._caps.textureAnisotropicFilterExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 0;
@@ -733,9 +733,9 @@ var BABYLON = BABYLON || {};
         texture.isReady = true;
     };
 
-    BABYLON.Engine.prototype.updateVideoTexture = function (texture, video) {
+    BABYLON.Engine.prototype.updateVideoTexture = function (texture, video, invertY) {
         this._gl.bindTexture(this._gl.TEXTURE_2D, texture);
-        this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, false);
+        this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, invertY ? false : true); // Video are upside down by default
 
         // Scale the video if it is a NPOT
         if (video.videoWidth !== texture._width || video.videoHeight !== texture._height) {

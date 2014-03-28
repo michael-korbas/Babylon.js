@@ -3,7 +3,7 @@
 var BABYLON = BABYLON || {};
 
 (function () {
-	BABYLON.inputCollisionFilter = function (scene, target, ellipsoid) {
+	BABYLON.InputCollisionFilter = function (scene, target, ellipsoid) {
 		BABYLON.inputFilter.call(this, scene, target);
 		this._transformedDirection = new BABYLON.Vector3();
 		this._tempNewPosition = new BABYLON.Vector3();
@@ -14,8 +14,8 @@ var BABYLON = BABYLON || {};
 		this._cameraHeight = 1.7;
 		this._positionBottom = new BABYLON.Vector3(0, 0, 0);
 	};
-	BABYLON.inputCollisionFilter.prototype = Object.create(BABYLON.inputFilter.prototype);
-	BABYLON.inputCollisionFilter.prototype.moveRelative = function (relativeMovement) {
+	BABYLON.InputCollisionFilter.prototype = Object.create(BABYLON.inputFilter.prototype);
+	BABYLON.InputCollisionFilter.prototype.moveRelative = function (relativeMovement) {
 		var rotation = this.getOrientation();
 		BABYLON.Vector3.TransformNormalToRef(relativeMovement, this.getOrientationMatrix(), this._transformedDirection);
 		this.getPosition().addToRef(this._transformedDirection, this._tempNewPosition);

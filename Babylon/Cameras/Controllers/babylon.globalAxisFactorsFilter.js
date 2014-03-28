@@ -3,7 +3,7 @@
 var BABYLON = BABYLON || {};
 
 (function () {
-	BABYLON.globalAxisFactorsFilter = function (scene, target, xFactor, yFactor, zFactor) {
+	BABYLON.GlobalAxisFactorsFilter = function (scene, target, xFactor, yFactor, zFactor) {
 		BABYLON.inputFilter.call(this, scene,target);
 		this.xFactor = xFactor;
 		this.yFactor = yFactor;
@@ -11,8 +11,8 @@ var BABYLON = BABYLON || {};
 
 		this._globalMovement = new BABYLON.Vector3(0, 0, 0);
 	};
-	BABYLON.globalAxisFactorsFilter.prototype = Object.create(BABYLON.inputFilter.prototype);
-	BABYLON.globalAxisFactorsFilter.prototype.moveRelative = function (relativeMovement) {
+	BABYLON.GlobalAxisFactorsFilter.prototype = Object.create(BABYLON.inputFilter.prototype);
+	BABYLON.GlobalAxisFactorsFilter.prototype.moveRelative = function (relativeMovement) {
 		var orientation = this.getOrientation();
 		BABYLON.Vector3.TransformNormalToRef(relativeMovement, this.getOrientationMatrix(), this._globalMovement);
 		this._globalMovement.x *= this.xFactor;

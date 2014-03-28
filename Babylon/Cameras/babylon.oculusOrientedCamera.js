@@ -63,12 +63,12 @@ var BABYLON = BABYLON || {};
         var controller = new BABYLON.OculusController(scene, multiTarget);
         var moveTarget = multiTarget;
         if (!disableCollisions) {
-            var collisionFilter = new BABYLON.inputCollisionFilter(scene, multiTarget);
+            var collisionFilter = new BABYLON.InputCollisionFilter(scene, multiTarget);
             moveTarget = collisionFilter;
         }
         if (!disableGravity) {
 
-            var globalAxisFactorFilter = new BABYLON.globalAxisFactorsFilter(scene, moveTarget, 1, 0, 1);
+            var globalAxisFactorFilter = new BABYLON.GlobalAxisFactorsFilter(scene, moveTarget, 1, 0, 1);
             var gravityController = new BABYLON.GravityInputController(scene, moveTarget);
             moveTarget = globalAxisFactorFilter;
         }

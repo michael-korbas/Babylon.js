@@ -326,13 +326,26 @@ var BABYLON = BABYLON || {};
     };
 
     // Methods
-    BABYLON.Scene.prototype.activeCameraByID = function (id) {
-        for (var index = 0; index < this.cameras.length; index++) {
-            if (this.cameras[index].id === id) {
-                this.activeCamera = this.cameras[index];
-                return;
-            }
+    BABYLON.Scene.prototype.setActiveCameraByID = function (id) {
+        var camera = this.getCameraByID(id);
+
+        if (camera) {
+            this.activeCamera = camera;
+            return camera;
         }
+
+        return null;
+    };
+
+    BABYLON.Scene.prototype.setActiveCameraByName = function (name) {
+        var camera = this.getCameraByName(name);
+
+        if (camera) {
+            this.activeCamera = camera;
+            return camera;
+        }
+
+        return null;
     };
 
     BABYLON.Scene.prototype.getMaterialByID = function (id) {
@@ -349,6 +362,16 @@ var BABYLON = BABYLON || {};
         for (var index = 0; index < this.materials.length; index++) {
             if (this.materials[index].name === name) {
                 return this.materials[index];
+            }
+        }
+
+        return null;
+    };
+
+    BABYLON.Scene.prototype.getCameraByID = function (id) {
+        for (var index = 0; index < this.cameras.length; index++) {
+            if (this.cameras[index].id === id) {
+                return this.cameras[index];
             }
         }
 
@@ -924,7 +947,7 @@ var BABYLON = BABYLON || {};
             camera = this.activeCamera;
         }
         var viewport = camera.viewport.toGlobal(engine);
-        return BABYLON.Ray.CreateNew(x, y, viewport.width, viewport.height, world ? world : BABYLON.Matrix.Identity(), camera.getViewMatrix(), camera.getProjectionMatrix());
+        return BABYLON.Ray.CreateNew(x * this._engine.getHardwareScalingLevel(), y * this._engine.getHardwareScalingLevel(), viewport.width, viewport.height, world ? world : BABYLON.Matrix.Identity(), camera.getViewMatrix(), camera.getProjectionMatrix());
     };
 
     BABYLON.Scene.prototype._internalPick = function (rayFunction, predicate, fastCheck) {
