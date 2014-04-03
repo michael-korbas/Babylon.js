@@ -4,6 +4,9 @@ var BABYLON = BABYLON || {};
 
 (function () {
     BABYLON.OculusOrientedCamera = function (name, position, scene, isLeftEye, ovrSettings, neutralOrientation) {
+        // OculusOrientedCamera is usually built 2 times using the same position
+        // So I duplicate the position to avoid errors from physics system (which could manipulate it twice per frame)
+        position = position ? new BABYLON.Vector3(position.x, position.y, position.z) : null;
         BABYLON.Camera.call(this, name, position, scene);
         this._referenceDirection = new BABYLON.Vector3(0, 0, 1);
         this._referenceUp = new BABYLON.Vector3(0, 1, 0);
@@ -35,8 +38,9 @@ var BABYLON = BABYLON || {};
         this.resetViewMatrix();
     };
     
-    BABYLON.OculusOrientedCamera.BuildOculusStereoCamera = function (scene, name, canvas, minZ, maxZ, position, neutralOrientation, useFXAA, disableGravity,disableCollisions, ovrSettings) {
-        position = position || new BABYLON.Vector2(0, 0);
+    BABYLON.OculusOrientedCamera.BuildOculusStereoCamera = function (scene, name, minZ, maxZ, position, neutralOrientation, useFXAA, disableGravity, disableCollisions, collisionEllipsoid, ovrSettings) {
+        var canvas = scene.getEngine().getRenderingCanvas();
+        position = position || BABYLON.Vector3.Zero(0, 0, 0);
         neutralOrientation = neutralOrientation || { yaw: 0.0, pitch: 0.0, roll: 0.0 };
         //var controller =  new BABYLON.OculusController();
         ovrSettings = ovrSettings || BABYLON.OculusController.CameraSettings_OculusRiftDevKit2013_Metric;
@@ -63,7 +67,7 @@ var BABYLON = BABYLON || {};
         var controller = new BABYLON.OculusController(scene, multiTarget);
         var moveTarget = multiTarget;
         if (!disableCollisions) {
-            var collisionFilter = new BABYLON.InputCollisionFilter(scene, multiTarget);
+            var collisionFilter = new BABYLON.InputCollisionFilter(scene, multiTarget, collisionEllipsoid);
             moveTarget = collisionFilter;
         }
         if (!disableGravity) {
