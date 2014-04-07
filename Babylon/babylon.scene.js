@@ -47,6 +47,9 @@ var BABYLON = BABYLON || {};
         // Meshes
         this.meshes = [];
 
+        // Geometries
+        this.geometries = [];
+
         // Internal smart arrays
         this._activeMeshes = new BABYLON.Tools.SmartArray(256);
         this._processedMaterials = new BABYLON.Tools.SmartArray(256);

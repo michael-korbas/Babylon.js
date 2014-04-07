@@ -347,6 +347,25 @@ var BABYLON = BABYLON || {};
         return camera;
     };
 
+    var boxTemplate;
+    var parseBox = function (parsedBox, scene) {
+        var box;
+        if (!boxTemplate) {
+            box = BABYLON.Mesh.CreateBox(parsedBox.name, parsedBox.size, scene) // todo: updatable?
+            boxTemplate = box;
+        }
+        else {
+            box = boxTemplate.clone(parsedBox.name, undefined, true);
+        }
+
+        // Parent
+        if (parsedBox.parentId) {
+            box._waitingParentId = parsedBox.parentId;
+        }
+
+        return box;
+    };
+
     var parseMesh = function (parsedMesh, scene, rootUrl) {
         var mesh = new BABYLON.Mesh(parsedMesh.name, scene);
         mesh.id = parsedMesh.id;
@@ -386,7 +405,7 @@ var BABYLON = BABYLON || {};
         }
 
         // Geometry
-        if (parsedMesh.delayLoadingFile) {
+        if (parsedMesh.delayLoadingFile) { // todo
             mesh.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_NOTLOADED;
             mesh.delayLoadingFile = rootUrl + parsedMesh.delayLoadingFile;
             mesh._boundingInfo = new BABYLON.BoundingInfo(BABYLON.Vector3.FromArray(parsedMesh.boundingBoxMinimum), BABYLON.Vector3.FromArray(parsedMesh.boundingBoxMaximum));
@@ -686,6 +705,57 @@ var BABYLON = BABYLON || {};
                     parseSkeleton(parsedSkeleton, scene);
                 }
             }
+
+            // Geometries
+            var geometries = parsedData.geometries;
+            // Boxes
+            var boxes = geometries.boxes;
+            for (var index = 0; index < boxes.length; index++) {
+                var parsedBox = boxes[index];
+                parseBox(parsedBox, scene);
+            }
+
+            /*// Spheres
+            var boxes = primitives.boxes;
+            for (var index = 0; index < boxes.length; index++) {
+                var parsedBox = boxes[index];
+                parseBox(parsedBox, scene);
+            }
+
+            // Cylinders
+            var boxes = primitives.boxes;
+            for (var index = 0; index < boxes.length; index++) {
+                var parsedBox = boxes[index];
+                parseBox(parsedBox, scene);
+            }
+
+            // Toruses
+            var boxes = primitives.boxes;
+            for (var index = 0; index < boxes.length; index++) {
+                var parsedBox = boxes[index];
+                parseBox(parsedBox, scene);
+            }
+
+            // Planes
+            var boxes = primitives.boxes;
+            for (var index = 0; index < boxes.length; index++) {
+                var parsedBox = boxes[index];
+                parseBox(parsedBox, scene);
+            }
+
+            // Grounds
+            var boxes = primitives.boxes;
+            for (var index = 0; index < boxes.length; index++) {
+                var parsedBox = boxes[index];
+                parseBox(parsedBox, scene);
+            }
+
+            // GroundsFromHeightMap
+            var boxes = primitives.boxes;
+            for (var index = 0; index < boxes.length; index++) {
+                var parsedBox = boxes[index];
+                parseBox(parsedBox, scene);
+            }*/
 
             // Meshes
             for (var index = 0; index < parsedData.meshes.length; index++) {

@@ -3,7 +3,7 @@
 var BABYLON = BABYLON || {};
 
 (function () {
-    BABYLON.VertexBuffer = function (mesh, data, kind, updatable) {
+    BABYLON.VertexBuffer = function (mesh, data, kind, updatable) { // todo: mesh
         this._mesh = mesh;
         this._engine = mesh.getScene().getEngine();
         this._updatable = updatable;

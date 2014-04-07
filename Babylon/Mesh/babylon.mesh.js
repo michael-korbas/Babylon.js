@@ -12,7 +12,9 @@ var BABYLON = BABYLON || {};
         this._totalVertices = 0;
         this._worldMatrix = BABYLON.Matrix.Identity();
 
-        scene.meshes.push(this);
+        if (scene) {
+            scene.meshes.push(this);
+        }
 
         this.position = new BABYLON.Vector3(0, 0, 0);
         this.rotation = new BABYLON.Vector3(0, 0, 0);
