@@ -37,6 +37,7 @@ Renders Pipelines are composed of serval classes.
 |**`disableEffectInPipeline(string renderPipelineName, string renderEffectName, BABYLON.Camera[] cameras)`**|Disable an effect in a pipeline for a list(or unique) of cameras|
 |**`enableDisplayOnlyPass(string renderPipelineName, string passName, BABYLON.Camera[] cameras)`**|Enable displaying of a specific pass used in a specific render pipeline, for a list(or unique) of cameras|
 |**`disableDisplayOnlyPass(string renderPipelineName, string passName, BABYLON.Camera[] cameras)`**|Disable displaying of a specific pass used in a specific render pipeline, for a list(or unique) of cameras|
+|**`update`**|Update all the pipelines.|
 
 
 ### BABYLON.RenderPipeline
@@ -55,9 +56,21 @@ Renders Pipelines are composed of serval classes.
 
 | Method | Description |
 |--------|--------|
-|**`RenderEffect(BABYLON.Engine engine, string name, string postProcessType, number ratio, BABYLON.Texture.SAMPLING_MODE samplingMode, bool singleInstance)`** **|Create a new instance of RenderEffect.|
+|**`RenderEffect(BABYLON.Engine engine, string name, string postProcessType, number ratio, BABYLON.Texture.SAMPLING_MODE samplingMode, bool singleInstance)`**|Create a new instance of RenderEffect.|
 |**`addPass(BABYLON.RenderPass)`**|Add a new pass to the effect.|
 |**`addRenderEffectAsPass(BABYLON.RenderEffect)`**|Add a render effect as a pass.|
 |**`removePass(BABYLON.RenderPass)`**|Delete a pass from the effect.|
 
-##
+### BABYLON.RenderPass
+
+<center>`new BABYLON.RenderPass(BABYLON.Scene scene, string name, object size, BABYLON.Mesh[] renderList, function(){} beforeRender, function(){} afterRender)`</center><br>
+
+| Method | Description |
+|--------|--------|
+|**`RenderPass(BABYLON.Scene scene, string name, object size, BABYLON.Mesh[] renderList, function(){} beforeRender, function(){} afterRender)`**|Create a new instance of Render Pass.|
+|**`setRenderList(BABYLON.Mesh[] meshes)`**|Update the renderList.|
+
+
+## Let's play with Render Pipeline
+
+
