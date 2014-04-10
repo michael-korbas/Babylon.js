@@ -61,6 +61,12 @@ Renders Pipelines are composed of serval classes.
 |**`addRenderEffectAsPass(BABYLON.RenderEffect)`**|Add a render effect as a pass.|
 |**`removePass(BABYLON.RenderPass)`**|Delete a pass from the effect.|
 
+<br>
+
+| Attribut | Description |
+|--------|--------|
+|parameters|Callback used for passed extra parameters on a post process.|
+
 ### BABYLON.RenderPass
 
 <center>`new BABYLON.RenderPass(BABYLON.Scene scene, string name, object size, BABYLON.Mesh[] renderList, function(){} beforeRender, function(){} afterRender)`</center><br>
@@ -74,3 +80,39 @@ Renders Pipelines are composed of serval classes.
 ## Let's play with Render Pipeline
 
 
+```
+var canvas = document.getElementById("renderCanvas");
+var engine = new BABYLON.Engine(canvas, true);
+var scene = new BABYLON.Scene(engine);
+
+
+var camera = new BABYLON.FreeCamera("Camera", new BABYLON.Vector3(0, 0, -10), scene);
+var light0 = new BABYLON.PointLight("Omni0", new BABYLON.Vector3(0, 100, 100), scene);
+var sphere = BABYLON.Mesh.CreateSphere("Sphere", 16, 3, scene);
+
+
+var renderPipelineManager = new BABYLON.RenderPipelineManager();
+
+var standardPipeline = new BABYLON.RenderPipeline(engine, "standardPipeline");
+
+var blackAndWhiteEffect = new BABYLON.RenderEffect(engine, "blackAndWhite", "BABYLON.BlackAndWhitePostProcess", 1.0);
+standardPipeline.addEffect(blackAndWhiteEffect);
+
+var horizontalBlurEffect = new BABYLON.RenderEffect(engine, "horizontalBlurEffect", "BABYLON.BlurPostProcess", 1.0);
+horizontalBlurEffect.parameters = function(effect) { 
+	effect.setFloat2("screenSize", canvas.width, canvas.height);
+    effect.setVector2("direction", new BABYLON.Vector2(1.0, 0.0));
+    effect.setFloat("blurWidth", 2.0);
+};
+standardPipeline.addEffect(horizontalBlurEffect);
+
+renderPipelineManager.attachCamerasToRenderPipeline("standardPipeline", camera);
+
+
+var renderLoop = function () {
+	renderPipelineManager.update();
+	scene.render();
+};
+
+engine.runRenderLoop(renderLoop);
+```
