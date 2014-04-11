@@ -1,10 +1,7 @@
 # How to use Render Pipeline
 
 Renders pipelines allow you to create a chain of post processes and attach it to a camera.
-A render pipeline can be managed by enabling and disabling some effect and displaying a specific pass for debugging.
-
-
-[TOC]
+A render pipeline can be managed by enabling and disabling some effects and displaying a specific pass for debugging.
 
 
 ## Base Render Pipeline
@@ -31,12 +28,12 @@ Renders Pipelines are composed of serval classes.
 |--------|--------|
 |**`RenderPipelineManager()`**|Create a new instance of RenderPipelineManager.|
 |**`addPipeline(BABYLON.RenderPipeline renderPipeline)`**|Add a new pipeline to an instance of RenderPipelineManager.|
-|**`attachCamerasToRenderPipeline(string renderPipelineName, BABYLON.Camera[] cameras, bool unique)`**|Attach a render pipeline to a list(or unique) of cameras|
-|**`detachCamerasFromRenderPipeline(string renderPipelineName, BABYLON.Camera[] cameras)`**|Detach a render to a list(or unique) of cameras|
-|**`enableEffectInPipeline(string renderPipelineName, string renderEffectName, BABYLON.Camera[] cameras)`**|Enable an effect in a pipeline for a list(or unique) of cameras|
-|**`disableEffectInPipeline(string renderPipelineName, string renderEffectName, BABYLON.Camera[] cameras)`**|Disable an effect in a pipeline for a list(or unique) of cameras|
-|**`enableDisplayOnlyPass(string renderPipelineName, string passName, BABYLON.Camera[] cameras)`**|Enable displaying of a specific pass used in a specific render pipeline, for a list(or unique) of cameras|
-|**`disableDisplayOnlyPass(string renderPipelineName, string passName, BABYLON.Camera[] cameras)`**|Disable displaying of a specific pass used in a specific render pipeline, for a list(or unique) of cameras|
+|**`attachCamerasToRenderPipeline(renderPipelineName, cameras, unique)`**|Attach a render pipeline to a list(or unique) of cameras|
+|**`detachCamerasFromRenderPipeline(renderPipelineName, cameras)`**|Detach a render to a list(or unique) of cameras|
+|**`enableEffectInPipeline(renderPipelineName, renderEffectName, cameras)`**|Enable an effect in a pipeline for a list(or unique) of cameras|
+|**`disableEffectInPipeline(renderPipelineName, renderEffectName, cameras)`**|Disable an effect in a pipeline for a list(or unique) of cameras|
+|**`enableDisplayOnlyPass(renderPipelineName, passName, cameras)`**|Enable displaying of a specific pass used in a specific render pipeline, for a list(or unique) of cameras|
+|**`disableDisplayOnlyPass(renderPipelineName, passName, cameras)`**|Disable displaying of a specific pass used in a specific render pipeline, for a list(or unique) of cameras|
 |**`update`**|Update all the pipelines.|
 
 
@@ -46,8 +43,8 @@ Renders Pipelines are composed of serval classes.
 
 | Method | Description |
 |--------|--------|
-|**`RenderPipeline(BABYLON.Engine engine, string name)`**|Create a new instance of RenderPipeline.|
-|**`addEffect(BABYLON.RenderEffect renderEffect)`**|Add a new render effect to the pipeline.|
+|**`RenderPipeline(engine, name)`**|Create a new instance of RenderPipeline.|
+|**`addEffect(renderEffect)`**|Add a new render effect to the pipeline.|
 
 
 ### BABYLON.RenderEffect
@@ -56,16 +53,16 @@ Renders Pipelines are composed of serval classes.
 
 | Method | Description |
 |--------|--------|
-|**`RenderEffect(BABYLON.Engine engine, string name, string postProcessType, number ratio, BABYLON.Texture.SAMPLING_MODE samplingMode, bool singleInstance)`**|Create a new instance of RenderEffect.|
-|**`addPass(BABYLON.RenderPass)`**|Add a new pass to the effect.|
-|**`addRenderEffectAsPass(BABYLON.RenderEffect)`**|Add a render effect as a pass.|
-|**`removePass(BABYLON.RenderPass)`**|Delete a pass from the effect.|
+|**`RenderEffect(engine, name, postProcessType, ratio, samplingMode, singleInstance)`**|Create a new instance of RenderEffect.|
+|**`addPass(renderPass)`**|Add a new pass to the effect.|
+|**`addRenderEffectAsPass(renderEffect)`**|Add a render effect as a pass.|
+|**`removePass(renderPass)`**|Delete a pass from the effect.|
 
 <br>
 
 | Attribut | Description |
 |--------|--------|
-|parameters|Callback used for passed extra parameters on a post process.|
+|**`parameters`**|Callback used for passing extra parameters on a post process.|
 
 ### BABYLON.RenderPass
 
@@ -73,12 +70,13 @@ Renders Pipelines are composed of serval classes.
 
 | Method | Description |
 |--------|--------|
-|**`RenderPass(BABYLON.Scene scene, string name, object size, BABYLON.Mesh[] renderList, function(){} beforeRender, function(){} afterRender)`**|Create a new instance of Render Pass.|
-|**`setRenderList(BABYLON.Mesh[] meshes)`**|Update the renderList.|
+|**`RenderPass(scene, name, size, renderList, beforeRender, afterRender)`**|Create a new instance of Render Pass.|
+|**`setRenderList(meshes)`**|Update the renderList.|
 
 
 ## Let's play with Render Pipeline
 
+### Simple Pipeline
 
 ```
 var canvas = document.getElementById("renderCanvas");
@@ -89,6 +87,8 @@ var scene = new BABYLON.Scene(engine);
 var camera = new BABYLON.FreeCamera("Camera", new BABYLON.Vector3(0, 0, -10), scene);
 var light0 = new BABYLON.PointLight("Omni0", new BABYLON.Vector3(0, 100, 100), scene);
 var sphere = BABYLON.Mesh.CreateSphere("Sphere", 16, 3, scene);
+
+camera.attachControl(canvas);
 
 
 var renderPipelineManager = new BABYLON.RenderPipelineManager();
@@ -105,9 +105,9 @@ horizontalBlurEffect.parameters = function(effect) {
     effect.setFloat("blurWidth", 2.0);
 };
 standardPipeline.addEffect(horizontalBlurEffect);
+renderPipelineManager.addPipeline(standardPipeline);
 
 renderPipelineManager.attachCamerasToRenderPipeline("standardPipeline", camera);
-
 
 var renderLoop = function () {
 	renderPipelineManager.update();
@@ -116,3 +116,5 @@ var renderLoop = function () {
 
 engine.runRenderLoop(renderLoop);
 ```
+
+http://jsfiddle.net/michael_korbas/SPw47/7/
