@@ -9,12 +9,9 @@ var BABYLON = BABYLON || {};
         this.name = name;
         this.id = name;
 
-        this._totalVertices = 0;
         this._worldMatrix = BABYLON.Matrix.Identity();
 
-        if (scene) {
-            scene.meshes.push(this);
-        }
+        scene.meshes.push(this);
 
         this.position = new BABYLON.Vector3(0, 0, 0);
         this.rotation = new BABYLON.Vector3(0, 0, 0);
@@ -23,7 +20,6 @@ var BABYLON = BABYLON || {};
 
         this._pivotMatrix = BABYLON.Matrix.Identity();
 
-        this._indices = [];
         this.subMeshes = [];
 
         this._renderId = 0;
@@ -176,52 +172,52 @@ var BABYLON = BABYLON || {};
     };
 
     BABYLON.Mesh.prototype.getTotalVertices = function () {
-        return this._totalVertices;
+        if (!this._geometry) {
+            return 0;
+        }
+        return this._geometry.getTotalVertices();
     };
 
     BABYLON.Mesh.prototype.getVerticesData = function (kind) {
-        return this._vertexBuffers[kind].getData();
+        if (!this._geometry) {
+            return undefined;
+        }
+        return this._geometry.getVerticesData(kind);
     };
 
     BABYLON.Mesh.prototype.getVertexBuffer = function (kind) {
-        return this._vertexBuffers[kind];
+        if (!this._geometry) {
+            return undefined;
+        }
+        return this._geometry.getVertexBuffer(kind);
     };
 
     BABYLON.Mesh.prototype.isVerticesDataPresent = function (kind) {
-        if (!this._vertexBuffers) {
-            if (this._delayInfo) {
-                return this._delayInfo.indexOf(kind) !== -1;
-            }
+        if (!this._geometry) {
             return false;
         }
-        return this._vertexBuffers[kind] !== undefined;
+        return this._geometry.isVerticesDataPresent(kind);
     };
 
     BABYLON.Mesh.prototype.getVerticesDataKinds = function () {
-        var result = [];
-        if (!this._vertexBuffers && this._delayInfo) {
-            for (var kind in this._delayInfo) {
-                result.push(kind);
-            }
-        } else {
-            for (var kind in this._vertexBuffers) {
-                result.push(kind);
-            }
+        if (!this._geometry) {
+            return [];
         }
-
-        return result;
+        return this._geometry.getVerticesDataKinds();
     };
 
     BABYLON.Mesh.prototype.getTotalIndices = function () {
-        return this._indices.length;
+        if (!this._geometry) {
+            return 0;
+        }
+        return this._geometry.getTotalIndices();
     };
 
     BABYLON.Mesh.prototype.getIndices = function () {
-        return this._indices;
-    };
-
-    BABYLON.Mesh.prototype.getVertexStrideSize = function () {
-        return this._vertexStrideSize;
+        if (!this._geometry) {
+            return [];
+        }
+        return this._geometry.getIndices();
     };
 
     BABYLON.Mesh.prototype.setPivotMatrix = function (matrix) {
@@ -297,7 +293,7 @@ var BABYLON = BABYLON || {};
             return;
         }
 
-        var extend = BABYLON.Tools.ExtractMinAndMax(data, 0, this._totalVertices);
+        var extend = BABYLON.Tools.ExtractMinAndMax(data, 0, this.getTotalVertices());
         this._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);
 
         for (var index = 0; index < this.subMeshes.length; index++) {
@@ -415,12 +411,13 @@ var BABYLON = BABYLON || {};
 
 
     BABYLON.Mesh.prototype._createGlobalSubMesh = function () {
-        if (!this._totalVertices || !this._indices) {
+        var totalVertices = this.getTotalVertices();
+        if (!totalVertices || !this.getIndices()) {
             return null;
         }
 
         this.subMeshes = [];
-        return new BABYLON.SubMesh(0, 0, this._totalVertices, 0, this._indices.length, this);
+        return new BABYLON.SubMesh(0, 0, totalVertices, 0, this.getTotalIndices(), this);
     };
 
 
@@ -429,84 +426,68 @@ var BABYLON = BABYLON || {};
             return;
         }
 
-        var subdivisionSize = this._indices.length / count;
+        var totalIndices = this.getTotalIndices();
+        var subdivisionSize = totalIndices / count;
         var offset = 0;
 
         this.subMeshes = [];
         for (var index = 0; index < count; index++) {
-            BABYLON.SubMesh.CreateFromIndices(0, offset, Math.min(subdivisionSize, this._indices.length - offset), this);
+            BABYLON.SubMesh.CreateFromIndices(0, offset, Math.min(subdivisionSize, totalIndices - offset), this);
 
             offset += subdivisionSize;
         }
     };
 
     BABYLON.Mesh.prototype.setVerticesData = function (data, kind, updatable) {
-        if (!this._vertexBuffers) {
-            this._vertexBuffers = {};
+        if (!this._geometry) {
+            var verticesData = {};
+            verticesData[kind] = {
+                data: data,
+                updatable: updatable
+            };
+            this._geometry = new BABYLON.Geometry(BABYLON.Geometry.RandomId(), this._scene.getEngine(), verticesData, null, this);
+            this._scene.pushGeometry(this._geometry);
         }
-
-        if (this._vertexBuffers[kind]) {
-            this._vertexBuffers[kind].dispose();
-        }
-
-        this._vertexBuffers[kind] = new BABYLON.VertexBuffer(this, data, kind, updatable);
-
-        if (kind === BABYLON.VertexBuffer.PositionKind) {
-            this._resetPointsArrayCache();
-
-            var stride = this._vertexBuffers[kind].getStrideSize();
-            this._totalVertices = data.length / stride;
-
-            var extend = BABYLON.Tools.ExtractMinAndMax(data, 0, this._totalVertices);
-            this._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);
-
-            this._createGlobalSubMesh();
+        else {
+            this._geometry.setVerticesData(data, kind, updatable);
         }
     };
 
     BABYLON.Mesh.prototype.updateVerticesData = function (kind, data, updateExtends) {
-        if (this._vertexBuffers[kind]) {
-            this._vertexBuffers[kind].update(data);
-
-            if (kind === BABYLON.VertexBuffer.PositionKind) {
-                this._resetPointsArrayCache();
-
-                if (updateExtends) {
-                    var stride = this._vertexBuffers[kind].getStrideSize();
-                    this._totalVertices = data.length / stride;
-
-                    var extend = BABYLON.Tools.ExtractMinAndMax(data, 0, this._totalVertices);
-                    this._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);
-                }
-            }
+        if (!this._geometry) {
+            return;
         }
+        this._geometry.updateVerticesData(kind, data, updateExtends);
     };
 
     BABYLON.Mesh.prototype.setIndices = function (indices) {
-        if (this._indexBuffer) {
-            this._scene.getEngine()._releaseBuffer(this._indexBuffer);
+        if (!this._geometry) {
+            this._geometry = new BABYLON.Geometry(BABYLON.Geometry.RandomId(), this._scene.getEngine(), null, indices, this);
+            this._scene.pushGeometry(this._geometry);
         }
-
-        this._indexBuffer = this._scene.getEngine().createIndexBuffer(indices);
-        this._indices = indices;
-
-        this._createGlobalSubMesh();
+        else {
+            this._geometry.setIndices(indices);
+        }
     };
 
     BABYLON.Mesh.prototype.bindAndDraw = function (subMesh, effect, wireframe) {
+        if (!this._geometry) {
+            return;
+        }
+
         var engine = this._scene.getEngine();
 
         // Wireframe
-        var indexToBind = this._indexBuffer;
+        var indexToBind = this._geometry._indexBuffer;
         var useTriangles = true;
 
         if (wireframe) {
-            indexToBind = subMesh.getLinesIndexBuffer(this._indices, engine);
+            indexToBind = subMesh.getLinesIndexBuffer(this.getIndices(), engine);
             useTriangles = false;
         }
 
         // VBOs
-        engine.bindMultiBuffers(this._vertexBuffers, indexToBind, effect);
+        engine.bindMultiBuffers(this._geometry._vertexBuffers, indexToBind, effect);
 
         // Draw order
         engine.draw(useTriangles, useTriangles ? subMesh.indexStart : 0, useTriangles ? subMesh.indexCount : subMesh.linesIndexCount);
@@ -525,7 +506,7 @@ var BABYLON = BABYLON || {};
     };
 
     BABYLON.Mesh.prototype.render = function (subMesh) {
-        if (!this._vertexBuffers || !this._indexBuffer) {
+        if (!this._geometry || !this._geometry._vertexBuffers || !this._geometry._indexBuffer) {
             return;
         }
 
@@ -674,25 +655,25 @@ var BABYLON = BABYLON || {};
 
         this._resetPointsArrayCache();
 
-        var data = this._vertexBuffers[BABYLON.VertexBuffer.PositionKind].getData();
+        var data = this.getVerticesData(BABYLON.VertexBuffer.PositionKind);
         var temp = new Float32Array(data.length);
         for (var index = 0; index < data.length; index += 3) {
             BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.FromArray(data, index), transform).toArray(temp, index);
         }
 
-        this.setVerticesData(temp, BABYLON.VertexBuffer.PositionKind, this._vertexBuffers[BABYLON.VertexBuffer.PositionKind].isUpdatable());
+        this.setVerticesData(temp, BABYLON.VertexBuffer.PositionKind, this.getVertexBuffer(BABYLON.VertexBuffer.PositionKind).isUpdatable());
 
         // Normals
         if (!this.isVerticesDataPresent(BABYLON.VertexBuffer.NormalKind)) {
             return;
         }
 
-        data = this._vertexBuffers[BABYLON.VertexBuffer.NormalKind].getData();
+        data = this.getVerticesData(BABYLON.VertexBuffer.NormalKind);
         for (var index = 0; index < data.length; index += 3) {
             BABYLON.Vector3.TransformNormal(BABYLON.Vector3.FromArray(data, index), transform).toArray(temp, index);
         }
 
-        this.setVerticesData(temp, BABYLON.VertexBuffer.NormalKind, this._vertexBuffers[BABYLON.VertexBuffer.NormalKind].isUpdatable());
+        this.setVerticesData(temp, BABYLON.VertexBuffer.NormalKind, this.getVertexBuffer(BABYLON.VertexBuffer.NormalKind).isUpdatable());
     };
 
     BABYLON.Mesh.prototype.lookAt = function (targetPoint, yawCor, pitchCor, rollCor) {
@@ -725,7 +706,7 @@ var BABYLON = BABYLON || {};
 
         this._positions = [];
 
-        var data = this._vertexBuffers[BABYLON.VertexBuffer.PositionKind].getData();
+        var data = this.getVerticesData(BABYLON.VertexBuffer.PositionKind);
         for (var index = 0; index < data.length; index += 3) {
             this._positions.push(BABYLON.Vector3.FromArray(data, index));
         }
@@ -746,7 +727,7 @@ var BABYLON = BABYLON || {};
             }
         }
         // Collide
-        collider._collide(subMesh, subMesh._lastColliderWorldVertices, this._indices, subMesh.indexStart, subMesh.indexStart + subMesh.indexCount, subMesh.verticesStart);
+        collider._collide(subMesh, subMesh._lastColliderWorldVertices, this.getIndices(), subMesh.indexStart, subMesh.indexStart + subMesh.indexCount, subMesh.verticesStart);
     };
 
     BABYLON.Mesh.prototype._processCollisionsForSubModels = function (collider, transformMatrix) {
@@ -808,7 +789,7 @@ var BABYLON = BABYLON || {};
             if (this.subMeshes.length > 1 && !subMesh.canIntersects(ray))
                 continue;
 
-            var currentIntersectInfo = subMesh.intersects(ray, this._positions, this._indices, fastCheck);
+            var currentIntersectInfo = subMesh.intersects(ray, this._positions, this.getIndices(), fastCheck);
 
             if (currentIntersectInfo) {
                 if (fastCheck || !intersectInfo || currentIntersectInfo.distance < intersectInfo.distance) {
@@ -850,20 +831,15 @@ var BABYLON = BABYLON || {};
     BABYLON.Mesh.prototype.clone = function (name, newParent, doNotCloneChildren) {
         var result = new BABYLON.Mesh(name, this._scene);
 
-        // Buffers
-        result._vertexBuffers = this._vertexBuffers;
-        for (var kind in result._vertexBuffers) {
-            result._vertexBuffers[kind]._buffer.references++;
-        }
-
-        result._indexBuffer = this._indexBuffer;
-        this._indexBuffer.references++;
+        // Geometry
+        this._geometry.applyToMesh(result);
 
         // Deep copy
-        BABYLON.Tools.DeepCopy(this, result, ["name", "material", "skeleton"], ["_indices", "_totalVertices"]);
+        // todo
+        BABYLON.Tools.DeepCopy(this, result, ["name", "material", "skeleton"], []);
 
         // Bounding info
-        var extend = BABYLON.Tools.ExtractMinAndMax(this.getVerticesData(BABYLON.VertexBuffer.PositionKind), 0, this._totalVertices);
+        var extend = BABYLON.Tools.ExtractMinAndMax(this.getVerticesData(BABYLON.VertexBuffer.PositionKind), 0, this.getTotalVertices());
         result._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);
 
         // Material
@@ -901,16 +877,8 @@ var BABYLON = BABYLON || {};
 
     // Dispose
     BABYLON.Mesh.prototype.dispose = function (doNotRecurse) {
-        if (this._vertexBuffers) {
-            for (var vbKind in this._vertexBuffers) {
-                this._vertexBuffers[vbKind].dispose();
-            }
-            this._vertexBuffers = null;
-        }
-
-        if (this._indexBuffer) {
-            this._scene.getEngine()._releaseBuffer(this._indexBuffer);
-            this._indexBuffer = null;
+        if (this._geometry) {
+            this._geometry.releaseForMesh(this);
         }
 
         // Physics
@@ -1040,15 +1008,16 @@ var BABYLON = BABYLON || {};
         var updatableNormals = false;
         for (var kindIndex = 0; kindIndex < kinds.length; kindIndex++) {
             var kind = kinds[kindIndex];
+            var vertexBuffer = this.getVertexBuffer(kind);
 
             if (kind === BABYLON.VertexBuffer.NormalKind) {
-                updatableNormals = this.getVertexBuffer(kind).isUpdatable();
+                updatableNormals = vertexBuffer.isUpdatable();
                 kinds.splice(kindIndex, 1);
                 kindIndex--;
                 continue;
             }
 
-            vbs[kind] = this.getVertexBuffer(kind);
+            vbs[kind] = vertexBuffer;
             data[kind] = vbs[kind].getData();
             newdata[kind] = [];
         }
@@ -1057,9 +1026,10 @@ var BABYLON = BABYLON || {};
         var previousSubmeshes = this.subMeshes.slice(0);
 
         var indices = this.getIndices();
+        var totalIndices = this.getTotalIndices();
 
         // Generating unique vertices per face
-        for (var index = 0; index < indices.length; index++) {
+        for (var index = 0; index < totalIndices; index++) {
             var vertexIndex = indices[index];
 
             for (var kindIndex = 0; kindIndex < kinds.length; kindIndex++) {
@@ -1075,7 +1045,7 @@ var BABYLON = BABYLON || {};
         // Updating faces & normal
         var normals = [];
         var positions = newdata[BABYLON.VertexBuffer.PositionKind];
-        for (var index = 0; index < indices.length; index += 3) {
+        for (var index = 0; index < totalIndices; index += 3) {
             indices[index] = index;
             indices[index + 1] = index + 1;
             indices[index + 2] = index + 2;

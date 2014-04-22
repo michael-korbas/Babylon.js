@@ -3,27 +3,27 @@
 var BABYLON = BABYLON || {};
 
 (function () {
-    BABYLON.VertexBuffer = function (mesh, data, kind, updatable, engine) {
-        this._mesh = mesh;
-        this._engine = engine || mesh.getScene().getEngine();
+    BABYLON.VertexBuffer = function (engine, data, kind, updatable, postponeInternalCreation) {
+        if (engine instanceof BABYLON.Mesh) { // old versions of BABYLON.VertexBuffer accepted 'mesh' instead of 'engine'
+            this._engine = mesh.getScene().getEngine();
+        }
+        else {
+            this._engine = engine;
+        }
+        
         this._updatable = updatable;
         
-        if (updatable) {
-            this._buffer = this._engine.createDynamicVertexBuffer(data.length * 4);
-            this._engine.updateDynamicVertexBuffer(this._buffer, data);
-        } else {
-            this._buffer = this._engine.createVertexBuffer(data);
+        this._data = data;
+
+        if (!postponeInternalCreation) { // by default
+            this.create();
         }
 
-        this._data = data;
         this._kind = kind;
 
         switch (kind) {
             case BABYLON.VertexBuffer.PositionKind:
                 this._strideSize = 3;
-                if (this._mesh) {
-                    this._mesh._resetPointsArrayCache();
-                }
                 break;
             case BABYLON.VertexBuffer.NormalKind:
                 this._strideSize = 3;
@@ -45,7 +45,7 @@ var BABYLON = BABYLON || {};
                 break;
         }
     };
-    
+
     // Properties
     BABYLON.VertexBuffer.prototype.isUpdatable = function () {
         return this._updatable;
@@ -60,16 +60,35 @@ var BABYLON = BABYLON || {};
     };
     
     // Methods
-    BABYLON.VertexBuffer.prototype.update = function (data) {
-        this._engine.updateDynamicVertexBuffer(this._buffer, data);
-        this._data = data;
-        
-        if (this._kind === BABYLON.VertexBuffer.PositionKind && this._mesh) {
-            this._mesh._resetPointsArrayCache();
+    BABYLON.VertexBuffer.prototype.create = function (data) {
+        if (!data && this._buffer) {
+            return; // nothing to do
+        }
+
+        data = data || this._data;
+
+        if (!this._buffer) { // create buffer
+            if (this._updatable) {
+                this._buffer = this._engine.createDynamicVertexBuffer(data.length * 4);
+            } else {
+                this._buffer = this._engine.createVertexBuffer(data);
+            }
+        }
+
+        if (this._updatable) { // update buffer
+            this._engine.updateDynamicVertexBuffer(this._buffer, data);
+            this._data = data;
         }
     };
 
+    BABYLON.VertexBuffer.prototype.update = function (data) {
+        this.create(data);
+    };
+
     BABYLON.VertexBuffer.prototype.dispose = function() {
+        if (!this._buffer) {
+            return;
+        }
         this._engine._releaseBuffer(this._buffer);
     }; 
         

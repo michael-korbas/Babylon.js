@@ -347,23 +347,101 @@ var BABYLON = BABYLON || {};
         return camera;
     };
 
-    var boxTemplate;
     var parseBox = function (parsedBox, scene) {
-        var box;
-        if (!boxTemplate) {
-            box = BABYLON.Mesh.CreateBox(parsedBox.name, parsedBox.size, scene) // todo: updatable?
-            boxTemplate = box;
-        }
-        else {
-            box = boxTemplate.clone(parsedBox.name, undefined, true);
+        var id = parsedBox.id;
+        var geometry = scene.getGeometryByID(id);
+        if (geometry) {
+            return null; // null since geometry could be something else than a box...
         }
 
-        // Parent
-        if (parsedBox.parentId) {
-            box._waitingParentId = parsedBox.parentId;
-        }
+        var box = BABYLON.Geometry.CreateBox(id, parsedBox.size, parsedBox.updatable, scene.getEngine(), null);
+        BABYLON.Tags.AddTagsTo(box, parsedBox.tags);
 
+        scene.pushGeometry(box, true);
+        
         return box;
+    };
+
+    var parseGeometry = function (parsedGeometry, scene) {
+        var id = parsedGeometry.id;
+        var geometry = scene.getGeometryByID(id);
+        if (geometry) {
+            return null; // null since geometry could be something else than of none type...
+        }
+
+        var updatable = parsedGeometry.updatable;
+
+        var verticesData = {};
+
+        // positions
+        var positions = parsedGeometry.positions;
+        if (positions) {
+            verticesData[BABYLON.VertexBuffer.PositionKind] = {
+                data: positions,
+                updatable: updatable
+            };
+        }
+
+        // normals
+        var normals = parsedGeometry.normals;
+        if (normals) {
+            verticesData[BABYLON.VertexBuffer.NormalKind] = {
+                data: normals,
+                updatable: updatable
+            };
+        }
+
+        // uvs
+        var uvs = parsedGeometry.uvs;
+        if (uvs) {
+            verticesData[BABYLON.VertexBuffer.UVKind] = {
+                data: uvs,
+                updatable: updatable
+            };
+        }
+        
+        // uv2s
+        var uv2s = parsedGeometry.uvs2;
+        if (uv2s) {
+            verticesData[BABYLON.VertexBuffer.UV2Kind] = {
+                data: uv2s,
+                updatable: updatable
+            };
+        }
+
+        // colors
+        var colors = parsedGeometry.colors;
+        if (colors) {
+            verticesData[BABYLON.VertexBuffer.ColorKind] = {
+                data: colors,
+                updatable: updatable
+            };
+        }
+
+        // matricesIndices
+        var matricesIndices = parsedGeometry.matricesIndices;
+        if (matricesIndices) {
+            verticesData[BABYLON.VertexBuffer.MatricesIndicesKind] = {
+                data: matricesIndices,
+                updatable: updatable
+            };
+        }
+
+        // matricesWeights
+        var matricesWeights = parsedGeometry.matricesWeights;
+        if (matricesWeights) {
+            verticesData[BABYLON.VertexBuffer.MatricesWeightsKind] = {
+                data: matricesWeights,
+                updatable: updatable
+            };
+        }
+
+        geometry = BABYLON.Geometry.CreateNone(id, verticesData, parsedGeometry.indices, scene.getEngine(), null);
+        BABYLON.Tags.AddTagsTo(geometry, parsedGeometry.tags);
+
+        scene.pushGeometry(geometry, true);
+
+        return geometry;
     };
 
     var parseMesh = function (parsedMesh, scene, rootUrl) {
@@ -405,7 +483,7 @@ var BABYLON = BABYLON || {};
         }
 
         // Geometry
-        if (parsedMesh.delayLoadingFile) { // todo
+        if (parsedMesh.delayLoadingFile) { // todo (geometries in separate files)
             mesh.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_NOTLOADED;
             mesh.delayLoadingFile = rootUrl + parsedMesh.delayLoadingFile;
             mesh._boundingInfo = new BABYLON.BoundingInfo(BABYLON.Vector3.FromArray(parsedMesh.boundingBoxMinimum), BABYLON.Vector3.FromArray(parsedMesh.boundingBoxMaximum));
@@ -500,8 +578,18 @@ var BABYLON = BABYLON || {};
     };
 
     var importGeometry = function (parsedGeometry, mesh) {
+        var scene = mesh.getScene();
+        
         // Geometry
-        if (parsedGeometry.positions && parsedGeometry.normals && parsedGeometry.indices) {
+        var geometryId = parsedGeometry.geometryId;
+        if (geometryId) {
+            var geometry = scene.getGeometryByID(geometryId);
+            if (geometry) {
+                geometry.applyToMesh(mesh);
+            }
+        }
+
+        else if (parsedGeometry.positions && parsedGeometry.normals && parsedGeometry.indices) {
             mesh.setVerticesData(parsedGeometry.positions, BABYLON.VertexBuffer.PositionKind, false);
             mesh.setVerticesData(parsedGeometry.normals, BABYLON.VertexBuffer.NormalKind, false);
 
@@ -563,7 +651,6 @@ var BABYLON = BABYLON || {};
             delete mesh._shouldGenerateFlatShading;
         }
 
-        var scene = mesh.getScene();
         if (scene._selectionOctree) {
             scene._selectionOctree.addMesh(mesh);
         }
@@ -708,54 +795,21 @@ var BABYLON = BABYLON || {};
 
             // Geometries
             var geometries = parsedData.geometries;
-            // Boxes
-            var boxes = geometries.boxes;
-            for (var index = 0; index < boxes.length; index++) {
-                var parsedBox = boxes[index];
-                parseBox(parsedBox, scene);
-            }
+            if (geometries) {
+                // Boxes
+                var boxes = geometries.boxes;
+                for (var index = 0; index < boxes.length; index++) {
+                    var parsedBox = boxes[index];
+                    parseBox(parsedBox, scene);
+                }
 
-            /*// Spheres
-            var boxes = primitives.boxes;
-            for (var index = 0; index < boxes.length; index++) {
-                var parsedBox = boxes[index];
-                parseBox(parsedBox, scene);
+                // Others
+                var others = geometries.others;
+                for (var index = 0; index < others.length; index++) {
+                    var parsedGeometry = others[index];
+                    parseGeometry(parsedGeometry, scene);
+                }
             }
-
-            // Cylinders
-            var boxes = primitives.boxes;
-            for (var index = 0; index < boxes.length; index++) {
-                var parsedBox = boxes[index];
-                parseBox(parsedBox, scene);
-            }
-
-            // Toruses
-            var boxes = primitives.boxes;
-            for (var index = 0; index < boxes.length; index++) {
-                var parsedBox = boxes[index];
-                parseBox(parsedBox, scene);
-            }
-
-            // Planes
-            var boxes = primitives.boxes;
-            for (var index = 0; index < boxes.length; index++) {
-                var parsedBox = boxes[index];
-                parseBox(parsedBox, scene);
-            }
-
-            // Grounds
-            var boxes = primitives.boxes;
-            for (var index = 0; index < boxes.length; index++) {
-                var parsedBox = boxes[index];
-                parseBox(parsedBox, scene);
-            }
-
-            // GroundsFromHeightMap
-            var boxes = primitives.boxes;
-            for (var index = 0; index < boxes.length; index++) {
-                var parsedBox = boxes[index];
-                parseBox(parsedBox, scene);
-            }*/
 
             // Meshes
             for (var index = 0; index < parsedData.meshes.length; index++) {

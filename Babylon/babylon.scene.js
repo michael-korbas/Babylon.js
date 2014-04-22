@@ -48,7 +48,7 @@ var BABYLON = BABYLON || {};
         this.meshes = [];
 
         // Geometries
-        this.geometries = [];
+        this._geometries = [];
 
         // Internal smart arrays
         this._activeMeshes = new BABYLON.SmartArray(256);
@@ -406,6 +406,26 @@ var BABYLON = BABYLON || {};
         }
 
         return null;
+    };
+
+    BABYLON.Scene.prototype.getGeometryByID = function (id) {
+        for (var index = 0; index < this._geometries.length; index++) {
+            if (this._geometries[index].id === id) {
+                return this._geometries[index];
+            }
+        }
+
+        return null;
+    };
+
+    BABYLON.Scene.prototype.pushGeometry = function (geometry, force) {
+        if (!force && this.getGeometryByID(geometry.id)) {
+            return false;
+        }
+
+        this._geometries.push(geometry);
+
+        return true;
     };
 
     BABYLON.Scene.prototype.getMeshByID = function (id) {
