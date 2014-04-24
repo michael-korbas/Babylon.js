@@ -354,7 +354,7 @@ var BABYLON = BABYLON || {};
             return null; // null since geometry could be something else than a box...
         }
 
-        var box = BABYLON.Geometry.CreateBox(id, parsedBox.size, parsedBox.updatable, scene.getEngine(), null);
+        var box = new BABYLON.Geometry(id, scene.getEngine(), BABYLON.VertexData.CreateBox(parsedBox.size), parsedBox.updatable, null);
         BABYLON.Tags.AddTagsTo(box, parsedBox.tags);
 
         scene.pushGeometry(box, true);
@@ -362,82 +362,65 @@ var BABYLON = BABYLON || {};
         return box;
     };
 
-    var parseGeometry = function (parsedGeometry, scene) {
-        var id = parsedGeometry.id;
+    var parseVertexData = function (parsedVertexData, scene) {
+        var id = parsedVertexData.id;
         var geometry = scene.getGeometryByID(id);
         if (geometry) {
             return null; // null since geometry could be something else than of none type...
         }
 
-        var updatable = parsedGeometry.updatable;
-
-        var verticesData = {};
+        var vertexData = new BABYLON.VertexData();
 
         // positions
-        var positions = parsedGeometry.positions;
+        var positions = parsedVertexData.positions;
         if (positions) {
-            verticesData[BABYLON.VertexBuffer.PositionKind] = {
-                data: positions,
-                updatable: updatable
-            };
+            vertexData.set(positions, BABYLON.VertexBuffer.PositionKind);
         }
 
         // normals
-        var normals = parsedGeometry.normals;
+        var normals = parsedVertexData.normals;
         if (normals) {
-            verticesData[BABYLON.VertexBuffer.NormalKind] = {
-                data: normals,
-                updatable: updatable
-            };
+            vertexData.set(normals, BABYLON.VertexBuffer.NormalKind);
         }
 
         // uvs
-        var uvs = parsedGeometry.uvs;
+        var uvs = parsedVertexData.uvs;
         if (uvs) {
-            verticesData[BABYLON.VertexBuffer.UVKind] = {
-                data: uvs,
-                updatable: updatable
-            };
+            vertexData.set(uvs, BABYLON.VertexBuffer.UVKind);
         }
         
         // uv2s
-        var uv2s = parsedGeometry.uvs2;
+        var uv2s = parsedVertexData.uv2s;
         if (uv2s) {
-            verticesData[BABYLON.VertexBuffer.UV2Kind] = {
-                data: uv2s,
-                updatable: updatable
-            };
+            vertexData.set(uv2s, BABYLON.VertexBuffer.UV2Kind);
         }
 
         // colors
-        var colors = parsedGeometry.colors;
+        var colors = parsedVertexData.colors;
         if (colors) {
-            verticesData[BABYLON.VertexBuffer.ColorKind] = {
-                data: colors,
-                updatable: updatable
-            };
+            vertexData.set(colors, BABYLON.VertexBuffer.ColorKind);
         }
 
         // matricesIndices
-        var matricesIndices = parsedGeometry.matricesIndices;
+        var matricesIndices = parsedVertexData.matricesIndices;
         if (matricesIndices) {
-            verticesData[BABYLON.VertexBuffer.MatricesIndicesKind] = {
-                data: matricesIndices,
-                updatable: updatable
-            };
+            vertexData.set(matricesIndices, BABYLON.VertexBuffer.MatricesIndicesKind);
         }
 
         // matricesWeights
-        var matricesWeights = parsedGeometry.matricesWeights;
+        var matricesWeights = parsedVertexData.matricesWeights;
         if (matricesWeights) {
-            verticesData[BABYLON.VertexBuffer.MatricesWeightsKind] = {
-                data: matricesWeights,
-                updatable: updatable
-            };
+            vertexData.set(matricesWeights, BABYLON.VertexBuffer.MatricesWeightsKind);
         }
 
-        geometry = BABYLON.Geometry.CreateNone(id, verticesData, parsedGeometry.indices, scene.getEngine(), null);
-        BABYLON.Tags.AddTagsTo(geometry, parsedGeometry.tags);
+        // indices
+        var indices = parsedVertexData.indices;
+        if (indices) {
+            vertexData.indices = indices;
+        }
+
+        geometry = new BABYLON.Geometry(id, scene.getEngine(), vertexData, parsedVertexData.updatable, null);
+        BABYLON.Tags.AddTagsTo(geometry, parsedVertexData.tags);
 
         scene.pushGeometry(geometry, true);
 
@@ -798,16 +781,20 @@ var BABYLON = BABYLON || {};
             if (geometries) {
                 // Boxes
                 var boxes = geometries.boxes;
-                for (var index = 0; index < boxes.length; index++) {
-                    var parsedBox = boxes[index];
-                    parseBox(parsedBox, scene);
+                if (boxes) {
+                    for (var index = 0; index < boxes.length; index++) {
+                        var parsedBox = boxes[index];
+                        parseBox(parsedBox, scene);
+                    }
                 }
-
-                // Others
-                var others = geometries.others;
-                for (var index = 0; index < others.length; index++) {
-                    var parsedGeometry = others[index];
-                    parseGeometry(parsedGeometry, scene);
+                
+                // VertexData
+                var vertexData = geometries.vertexData;
+                if (vertexData) {
+                    for (var index = 0; index < vertexData.length; index++) {
+                        var parsedVertexData = vertexData[index];
+                        parseVertexData(parsedVertexData, scene);
+                    }
                 }
             }
 

@@ -89,7 +89,9 @@ var BABYLON = BABYLON || {};
         if (!this._buffer) {
             return;
         }
-        this._engine._releaseBuffer(this._buffer);
+        if (this._engine._releaseBuffer(this._buffer)) {
+            this._buffer = null;
+        }
     }; 
         
     // Enums

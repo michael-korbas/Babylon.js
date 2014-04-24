@@ -440,12 +440,10 @@ var BABYLON = BABYLON || {};
 
     BABYLON.Mesh.prototype.setVerticesData = function (data, kind, updatable) {
         if (!this._geometry) {
-            var verticesData = {};
-            verticesData[kind] = {
-                data: data,
-                updatable: updatable
-            };
-            this._geometry = new BABYLON.Geometry(BABYLON.Geometry.RandomId(), this._scene.getEngine(), verticesData, null, this);
+            var vertexData = new BABYLON.VertexData();
+            vertexData.set(data, kind);
+
+            this._geometry = new BABYLON.Geometry(BABYLON.Geometry.RandomId(), this._scene.getEngine(), vertexData, updatable, this);
             this._scene.pushGeometry(this._geometry);
         }
         else {
@@ -462,7 +460,10 @@ var BABYLON = BABYLON || {};
 
     BABYLON.Mesh.prototype.setIndices = function (indices) {
         if (!this._geometry) {
-            this._geometry = new BABYLON.Geometry(BABYLON.Geometry.RandomId(), this._scene.getEngine(), null, indices, this);
+            var vertexData = new BABYLON.VertexData();
+            vertexData.indices = indices;
+
+            this._geometry = new BABYLON.Geometry(BABYLON.Geometry.RandomId(), this._scene.getEngine(), vertexData, false, this); // todo: updatable?
             this._scene.pushGeometry(this._geometry);
         }
         else {

@@ -401,7 +401,10 @@ var BABYLON = BABYLON || {};
 
         if (buffer.references === 0) {
             this._gl.deleteBuffer(buffer);
+            return true;
         }
+
+        return false;
     };
 
     BABYLON.Engine.prototype.draw = function (useTriangles, indexStart, indexCount) {
