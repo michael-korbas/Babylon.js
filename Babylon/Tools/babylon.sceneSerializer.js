@@ -348,6 +348,46 @@ var BABYLON = BABYLON || {};
         return serializationObject;
     };
 
+    var serializeVertexData = function (vertexData) {
+        var serializationObject = {};
+
+        serializationObject.id = vertexData.id;
+        serializationObject.tags = vertexData._tags;
+
+        if (vertexData.isVerticesDataPresent(BABYLON.VertexBuffer.PositionKind)) {
+            serializationObject.positions = vertexData.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+        }
+
+        if (vertexData.isVerticesDataPresent(BABYLON.VertexBuffer.NormalKind)) {
+            serializationObject.normals = vertexData.getVerticesData(BABYLON.VertexBuffer.NormalKind);
+        }
+
+        if (vertexData.isVerticesDataPresent(BABYLON.VertexBuffer.UVKind)) {
+            serializationObject.uvs = vertexData.getVerticesData(BABYLON.VertexBuffer.UVKind);
+        }
+
+        if (vertexData.isVerticesDataPresent(BABYLON.VertexBuffer.UV2Kind)) {
+            serializationObject.uvs2 = vertexData.getVerticesData(BABYLON.VertexBuffer.UV2Kind);
+        }
+
+        if (vertexData.isVerticesDataPresent(BABYLON.VertexBuffer.ColorKind)) {
+            serializationObject.colors = vertexData.getVerticesData(BABYLON.VertexBuffer.ColorKind);
+        }
+
+        if (vertexData.isVerticesDataPresent(BABYLON.VertexBuffer.MatricesIndicesKind)) {
+            serializationObject.matricesIndices = vertexData.getVerticesData(BABYLON.VertexBuffer.MatricesIndicesKind);
+            serializationObject.matricesIndices._isExpanded = true;
+        }
+
+        if (vertexData.isVerticesDataPresent(BABYLON.VertexBuffer.MatricesWeightsKind)) {
+            serializationObject.matricesWeights = vertexData.getVerticesData(BABYLON.VertexBuffer.MatricesWeightsKind);
+        }
+
+        serializationObject.indices = mesh.getIndices();
+
+        return serializationObject;
+    };
+
     var serializeMesh = function (mesh) {
         var serializationObject = {};
 
@@ -517,6 +557,13 @@ var BABYLON = BABYLON || {};
             serializationObject.skeletons = [];
             for (var index = 0; index < scene.skeletons.length; index++) {
                 serializationObject.skeletons.push(serializeSkeleton(scene.skeletons[index]));
+            }
+
+            // Geometries
+            serializationObject.geometries = [];
+            for (var index = 0; index < scene._geometries.length; index++) {
+                var geometry = scene._geometries[index];
+                serializationObject.geometries.push(serializeGeometry(geometry));
             }
 
             // Meshes

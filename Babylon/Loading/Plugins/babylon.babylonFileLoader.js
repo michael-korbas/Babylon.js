@@ -354,7 +354,7 @@ var BABYLON = BABYLON || {};
             return null; // null since geometry could be something else than a box...
         }
 
-        var box = new BABYLON.Geometry(id, scene.getEngine(), BABYLON.VertexData.CreateBox(parsedBox.size), parsedBox.updatable, null);
+        var box = new BABYLON.Geometry.Primitives.Box(id, scene.getEngine(), parsedBox.canBeRegenerated, parsedBox.size, null);
         BABYLON.Tags.AddTagsTo(box, parsedBox.tags);
 
         scene.pushGeometry(box, true);

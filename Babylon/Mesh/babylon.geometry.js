@@ -278,4 +278,195 @@ var BABYLON = BABYLON || {};
 
         return geometry.copy(id);
     };
+
+    /////// Primitives //////////////////////////////////////////////
+
+    BABYLON.Geometry.Primitives = {};
+
+    /// Abstract class
+
+    BABYLON.Geometry.Primitives._Primitive = function (id, engine, vertexData, canBeRegenerated, mesh) {
+        this._beingRegenerated = true;
+        this._canBeRegenerated = canBeRegenerated;
+        BABYLON.Geometry.call(this, id, engine, vertexData, false, mesh); // updatable = false to be sure not to update vertices
+        this._beingRegenerated = false;
+    };
+
+    BABYLON.Geometry.Primitives._Primitive.prototype = Object.create(BABYLON.Geometry.prototype);
+
+    BABYLON.Geometry.Primitives._Primitive.prototype.regenerate = function () {
+        if (!this._canBeRegenerated) {
+            return;
+        }
+        this._beingRegenerated = true;
+        this.setAllVerticesData(this._regenerateVertexData(), false);
+        this._beingRegenerated = false;
+    };
+
+    BABYLON.Geometry.Primitives._Primitive.prototype.asNewGeometry = function (id) {
+        return BABYLON.Geometry.prototype.copy.call(this, id);
+    };
+
+    // overrides
+    BABYLON.Geometry.Primitives._Primitive.prototype.setAllVerticesData = function (vertexData, updatable) {
+        if (!this._beingRegenerated) {
+            return;
+        }
+        BABYLON.Geometry.prototype.setAllVerticesData.call(this, vertexData, false);
+    };
+
+    BABYLON.Geometry.Primitives._Primitive.prototype.setVerticesData = function (data, kind, updatable) {
+        if (!this._beingRegenerated) {
+            return;
+        }
+        BABYLON.Geometry.prototype.setVerticesData.call(this, data, kind, false);
+    };
+
+    // to override
+    BABYLON.Geometry.Primitives._Primitive.prototype._regenerateVertexData = function () {
+        throw new Error("Abstract method");
+    };
+
+    BABYLON.Geometry.Primitives._Primitive.prototype.copy = function (id) {
+        throw new Error("Must be overriden in sub-classes.");
+    };
+
+    //// Box
+
+    BABYLON.Geometry.Primitives.Box = function (id, engine, canBeRegenerated, size, mesh) {
+        this.size = size;
+
+        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+    };
+
+    BABYLON.Geometry.Primitives.Box.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+
+    BABYLON.Geometry.Primitives.Box.prototype._regenerateVertexData = function () {
+        return BABYLON.VertexData.CreateBox(this.size); 
+    };
+
+    BABYLON.Geometry.Primitives.Box.prototype.copy = function (id) {
+        return new BABYLON.Geometry.Primitives.Box(id, this._engine, this._canBeRegenerated, this.size, null);
+    };
+
+    //// Sphere
+
+    BABYLON.Geometry.Primitives.Sphere = function (id, engine, canBeRegenerated, segments, diameter, mesh) {
+        this.segments = segments;
+        this.diameter = diameter;
+
+        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+    };
+
+    BABYLON.Geometry.Primitives.Sphere.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+
+    BABYLON.Geometry.Primitives.Sphere.prototype._regenerateVertexData = function () {
+        return BABYLON.VertexData.CreateSphere(this.segments, this.diameter);
+    };
+
+    BABYLON.Geometry.Primitives.Sphere.prototype.copy = function (id) {
+        return new BABYLON.Geometry.Primitives.Sphere(id, this._engine, this._canBeRegenerated, this.segments, this.diameter, null);
+    };
+
+    //// Cylinder
+
+    BABYLON.Geometry.Primitives.Cylinder = function (id, engine, canBeRegenerated, height, diameterTop, diameterBottom, tessellation, mesh) {
+        this.height = height;
+        this.diameterTop = diameterTop;
+        this.diameterBottom = diameterBottom;
+        this.tessellation = tessellation;
+
+        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+    };
+
+    BABYLON.Geometry.Primitives.Cylinder.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+
+    BABYLON.Geometry.Primitives.Cylinder.prototype._regenerateVertexData = function () {
+        return BABYLON.VertexData.CreateCylinder(this.height, this.diameterTop, this.diameterBottom, this.tessellation);
+    };
+
+    BABYLON.Geometry.Primitives.Cylinder.prototype.copy = function (id) {
+        return new BABYLON.Geometry.Primitives.Cylinder(id, this._engine, this._canBeRegenerated, this.height, this.diameterTop, this.diameterBottom, this.tessellation, null);
+    };
+
+    //// Torus
+
+    BABYLON.Geometry.Primitives.Torus = function (id, engine, canBeRegenerated, diameter, thickness, tessellation, mesh) {
+        this.diameter = diameter;
+        this.thickness = thickness;
+        this.tessellation = tessellation;
+
+        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+    };
+
+    BABYLON.Geometry.Primitives.Torus.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+
+    BABYLON.Geometry.Primitives.Torus.prototype._regenerateVertexData = function () {
+        return BABYLON.VertexData.CreateTorus(this.diameter, this.thickness, this.tessellation);
+    };
+
+    BABYLON.Geometry.Primitives.Torus.prototype.copy = function (id) {
+        return new BABYLON.Geometry.Primitives.Torus(id, this._engine, this._canBeRegenerated, this.diameter, this.thickness, this.tessellation, null);
+    };
+
+    //// Ground
+
+    BABYLON.Geometry.Primitives.Ground = function (id, engine, canBeRegenerated, width, height, subdivisions, mesh) {
+        this.width = width;
+        this.height = height;
+        this.subdivisions = subdivisions;
+
+        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+    };
+
+    BABYLON.Geometry.Primitives.Ground.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+
+    BABYLON.Geometry.Primitives.Ground.prototype._regenerateVertexData = function () {
+        return BABYLON.VertexData.CreateGround(this.width, this.height, this.subdivisions);
+    };
+
+    BABYLON.Geometry.Primitives.Ground.prototype.copy = function (id) {
+        return new BABYLON.Geometry.Primitives.Ground(id, this._engine, this._canBeRegenerated, this.width, this.height, this.subdivisions, null);
+    };
+
+    //// Plane
+
+    BABYLON.Geometry.Primitives.Plane = function (id, engine, canBeRegenerated, size, mesh) {
+        this.size = size;
+
+        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+    };
+
+    BABYLON.Geometry.Primitives.Plane.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+
+    BABYLON.Geometry.Primitives.Plane.prototype._regenerateVertexData = function () {
+        return BABYLON.VertexData.CreatePlane(this.size);
+    };
+
+    BABYLON.Geometry.Primitives.Plane.prototype.copy = function (id) {
+        return new BABYLON.Geometry.Primitives.Plane(id, this._engine, this._canBeRegenerated, this.size, null);
+    };
+
+    //// TorusKnot
+
+    BABYLON.Geometry.Primitives.TorusKnot = function (id, engine, canBeRegenerated, radius, tube, radialSegments, tubularSegments, p, q, mesh) {
+        this.radius = radius;
+        this.tube = tube;
+        this.radialSegments = radialSegments;
+        this.tubularSegments = tubularSegments;
+        this.p = p;
+        this.q = q;
+
+        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+    };
+
+    BABYLON.Geometry.Primitives.TorusKnot.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+
+    BABYLON.Geometry.Primitives.TorusKnot.prototype._regenerateVertexData = function () {
+        return BABYLON.VertexData.CreateTorusKnot(this.radius, this.tube, this.radialSegments, this.tubularSegments, this.p, this.q);
+    };
+
+    BABYLON.Geometry.Primitives.TorusKnot.prototype.copy = function (id) {
+        return new BABYLON.Geometry.Primitives.TorusKnot(id, this._engine, this._canBeRegenerated, this.radius, this.tube, this.radialSegments, this.tubularSegments, this.p, this.q, null);
+    };
 })();
