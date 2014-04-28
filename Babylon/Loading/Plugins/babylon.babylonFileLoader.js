@@ -347,14 +347,17 @@ var BABYLON = BABYLON || {};
         return camera;
     };
 
+    var parseGeometry = function (parsedGeometry, scene) {
+        var id = parsedGeometry.id;
+        return scene.getGeometryByID(id);
+    };
+
     var parseBox = function (parsedBox, scene) {
-        var id = parsedBox.id;
-        var geometry = scene.getGeometryByID(id);
-        if (geometry) {
+        if (parseGeometry(parsedBox, scene)) {
             return null; // null since geometry could be something else than a box...
         }
 
-        var box = new BABYLON.Geometry.Primitives.Box(id, scene.getEngine(), parsedBox.canBeRegenerated, parsedBox.size, null);
+        var box = new BABYLON.Geometry.Primitives.Box(parsedBox.id, scene.getEngine(), parsedBox.canBeRegenerated, parsedBox.size, null);
         BABYLON.Tags.AddTagsTo(box, parsedBox.tags);
 
         scene.pushGeometry(box, true);
@@ -362,13 +365,87 @@ var BABYLON = BABYLON || {};
         return box;
     };
 
-    // todo parse other primitives
+    var parseSphere = function (parsedSphere, scene) {
+        if (parseGeometry(parsedSphere, scene)) {
+            return null; // null since geometry could be something else than a sphere...
+        }
+
+        var sphere = new BABYLON.Geometry.Primitives.Sphere(parsedSphere.id, scene.getEngine(), parsedSphere.canBeRegenerated, parsedSphere.segments, parsedSphere.diameter, null);
+        BABYLON.Tags.AddTagsTo(sphere, parsedSphere.tags);
+
+        scene.pushGeometry(sphere, true);
+
+        return sphere;
+    };
+
+    var parseCylinder = function (parsedCylinder, scene) {
+        if (parseGeometry(parsedCylinder, scene)) {
+            return null; // null since geometry could be something else than a cylinder...
+        }
+
+        var cylinder = new BABYLON.Geometry.Primitives.Cylinder(parsedCylinder.id, scene.getEngine(), parsedCylinder.canBeRegenerated, parsedCylinder.height, parsedCylinder.diameterTop, parsedCylinder.diameterBottom, parsedCylinder.tessellation, null);
+        BABYLON.Tags.AddTagsTo(cylinder, parsedCylinder.tags);
+
+        scene.pushGeometry(cylinder, true);
+
+        return cylinder;
+    };
+
+    var parseTorus = function (parsedTorus, scene) {
+        if (parseGeometry(parsedTorus, scene)) {
+            return null; // null since geometry could be something else than a torus...
+        }
+
+        var torus = new BABYLON.Geometry.Primitives.Torus(parsedTorus.id, scene.getEngine(), parsedTorus.canBeRegenerated, parsedTorus.diameter, parsedTorus.thickness, parsedTorus.tessellation, null);
+        BABYLON.Tags.AddTagsTo(torus, parsedTorus.tags);
+
+        scene.pushGeometry(torus, true);
+
+        return torus;
+    };
+
+    var parseGround = function (parsedGround, scene) {
+        if (parseGeometry(parsedGround, scene)) {
+            return null; // null since geometry could be something else than a ground...
+        }
+
+        var ground = new BABYLON.Geometry.Primitives.Ground(parsedGround.id, scene.getEngine(), parsedGround.canBeRegenerated, parsedGround.width, parsedGround.height, parsedGround.subdivisions, null);
+        BABYLON.Tags.AddTagsTo(ground, parsedGround.tags);
+
+        scene.pushGeometry(ground, true);
+
+        return ground;
+    };
+
+    var parsePlane = function (parsedPlane, scene) {
+        if (parseGeometry(parsedPlane, scene)) {
+            return null; // null since geometry could be something else than a plane...
+        }
+
+        var plane = new BABYLON.Geometry.Primitives.Plane(parsedPlane.id, scene.getEngine(), parsedPlane.canBeRegenerated, parsedPlane.size, null);
+        BABYLON.Tags.AddTagsTo(plane, parsedPlane.tags);
+
+        scene.pushGeometry(plane, true);
+
+        return plane;
+    };
+
+    var parseTorusKnot = function (parsedTorusKnot, scene) {
+        if (parseGeometry(parsedTorusKnot, scene)) {
+            return null; // null since geometry could be something else than a torusKnot...
+        }
+
+        var torusKnot = new BABYLON.Geometry.Primitives.TorusKnot(parsedTorusKnot.id, scene.getEngine(), parsedTorusKnot.canBeRegenerated, parsedTorusKnot.radius, parsedTorusKnot.tube, parsedTorusKnot.radialSegments, parsedTorusKnot.tubularSegments, parsedTorusKnot.p, parsedTorusKnot.q, null);
+        BABYLON.Tags.AddTagsTo(torusKnot, parsedTorusKnot.tags);
+
+        scene.pushGeometry(torusKnot, true);
+
+        return torusKnot;
+    };
 
     var parseVertexData = function (parsedVertexData, scene) {
-        var id = parsedVertexData.id;
-        var geometry = scene.getGeometryByID(id);
-        if (geometry) {
-            return null; // null since geometry could be something else than of none type...
+        if (parseGeometry(parsedVertexData, scene)) {
+            return null; // null since geometry could be a primitive
         }
 
         var vertexData = new BABYLON.VertexData();
@@ -421,7 +498,7 @@ var BABYLON = BABYLON || {};
             vertexData.indices = indices;
         }
 
-        geometry = new BABYLON.Geometry(id, scene.getEngine(), vertexData, parsedVertexData.updatable, null);
+        geometry = new BABYLON.Geometry(parsedVertexData.id, scene.getEngine(), vertexData, parsedVertexData.updatable, null);
         BABYLON.Tags.AddTagsTo(geometry, parsedVertexData.tags);
 
         scene.pushGeometry(geometry, true);
@@ -787,6 +864,60 @@ var BABYLON = BABYLON || {};
                     for (var index = 0; index < boxes.length; index++) {
                         var parsedBox = boxes[index];
                         parseBox(parsedBox, scene);
+                    }
+                }
+
+                // Spheres
+                var spheres = geometries.spheres;
+                if (spheres) {
+                    for (var index = 0; index < spheres.length; index++) {
+                        var parsedSphere = spheres[index];
+                        parseSphere(parsedSphere, scene);
+                    }
+                }
+
+                // Cylinders
+                var cylinders = geometries.cylinders;
+                if (cylinders) {
+                    for (var index = 0; index < cylinders.length; index++) {
+                        var parsedCylinder = cylinders[index];
+                        parseCylinder(parsedCylinder, scene);
+                    }
+                }
+
+                // Toruses
+                var toruses = geometries.toruses;
+                if (toruses) {
+                    for (var index = 0; index < toruses.length; index++) {
+                        var parsedTorus = toruses[index];
+                        parseTorus(parsedTorus, scene);
+                    }
+                }
+
+                // Grounds
+                var grounds = geometries.grounds;
+                if (grounds) {
+                    for (var index = 0; index < grounds.length; index++) {
+                        var parsedGround = grounds[index];
+                        parseGround(parsedGround, scene);
+                    }
+                }
+
+                // Planes
+                var planes = geometries.planes;
+                if (planes) {
+                    for (var index = 0; index < planes.length; index++) {
+                        var parsedPlane = planes[index];
+                        parsePlane(parsedPlane, scene);
+                    }
+                }
+
+                // TorusKnots
+                var torusKnots = geometries.torusKnots;
+                if (torusKnots) {
+                    for (var index = 0; index < torusKnots.length; index++) {
+                        var parsedTorusKnot = torusKnots[index];
+                        parseTorusKnot(parsedTorusKnot, scene);
                     }
                 }
                 

@@ -836,7 +836,6 @@ var BABYLON = BABYLON || {};
         this._geometry.applyToMesh(result);
 
         // Deep copy
-        // todo
         BABYLON.Tools.DeepCopy(this, result, ["name", "material", "skeleton"], []);
 
         // Bounding info
