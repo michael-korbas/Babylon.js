@@ -362,6 +362,8 @@ var BABYLON = BABYLON || {};
         return box;
     };
 
+    // todo parse other primitives
+
     var parseVertexData = function (parsedVertexData, scene) {
         var id = parsedVertexData.id;
         var geometry = scene.getGeometryByID(id);

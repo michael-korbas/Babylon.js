@@ -5,7 +5,7 @@ var BABYLON = BABYLON || {};
 // mesh.getVertexStrideSize?
 // when we set vertices for a data, do we want to do it for all others "clones"?
 // how to be sure that engine is the same than the one of mesh? (constructor, CreateBox)
-// submeshes are not shared
+// submeshes are not shared and are reset when setting positions
 
 (function () {
     BABYLON.Geometry = function (id, engine, vertexData, updatable, mesh) {
@@ -191,6 +191,9 @@ var BABYLON = BABYLON || {};
 
         var numOfMeshes = meshes.length;
 
+        // must be done before setting vertexBuffers because of mesh._createGlobalSubMesh()
+        mesh._geometry = this;
+
         // vertexBuffers
         for (var kind in this._vertexBuffers) {
             if (numOfMeshes === 0) {
@@ -217,8 +220,6 @@ var BABYLON = BABYLON || {};
         }
 
         meshes.push(mesh);
-
-        mesh._geometry = this;
     };
 
     BABYLON.Geometry.prototype.dispose = function () {
