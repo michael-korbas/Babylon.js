@@ -57,7 +57,24 @@ var BABYLON = BABYLON || {};
 			return undefined;
 
 		return Array.isArray(obj) ? obj : [obj];
-    };
+	};
+
+	BABYLON.Tools.Grep = function (array, callback, stopOnFirstFound) {
+	    var items = [];
+	    var length = array.length;
+        
+	    for (var i = 0; i < length; i++) {
+	        if (callback(array[i])) {
+	            items.push({ element:array[i], index:i });
+
+	            if (stopOnFirstFound) {
+	                break;
+	            }
+	        }
+	    }
+
+	    return items.length > 1 ? items[0] : items;
+	};
 
     // Misc.
     BABYLON.Tools.GetPointerPrefix = function() {

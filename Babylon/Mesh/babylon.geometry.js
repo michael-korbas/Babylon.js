@@ -8,8 +8,9 @@ var BABYLON = BABYLON || {};
 // submeshes are not shared and are reset when setting positions
 
 (function () {
-    BABYLON.Geometry = function (id, engine, vertexData, updatable, mesh) {
+    BABYLON.Geometry = function (id, engine, vertexData, updatable, level) {
         this.id = id;
+        this.level = level || 0;
         this._engine = engine;
         this._meshes = [];
 
@@ -20,11 +21,6 @@ var BABYLON = BABYLON || {};
         else {
             this._totalVertices = 0;
             this._indices = [];
-        }
-
-        // applyToMesh
-        if (mesh) {
-            this.applyToMesh(mesh);
         }
     };
 
@@ -220,6 +216,11 @@ var BABYLON = BABYLON || {};
         }
 
         meshes.push(mesh);
+    };
+
+    BABYLON.Geometry.prototype.removeMeshReference = function (mesh) {
+        var index = this._meshes.indexOf(mesh);
+        this._meshes.splice(index, 1);
     };
 
     BABYLON.Geometry.prototype.dispose = function () {

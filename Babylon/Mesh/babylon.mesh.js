@@ -26,6 +26,11 @@ var BABYLON = BABYLON || {};
 
         this._onBeforeRenderCallbacks = [];
 
+        this._triggers = [];
+
+        this._geometry = null;
+        this._geometryManager = null;
+
         // Animations
         this.animations = [];
 
@@ -79,6 +84,23 @@ var BABYLON = BABYLON || {};
     BABYLON.Mesh.prototype.showBoundingBox = false;
 
     // Properties
+
+    BABYLON.Mesh.prototype.createGeometryManager = function () {
+        this._geometryManager = new BABYLON.GeometryManager(this);
+    };
+
+    BABYLON.Mesh.prototype.addTrigger = function (scene, label, geometryLevel) {
+        var args = Array.prototype.slice.call(arguments);
+
+        args.splice(1, 1);
+        args.push(this);
+
+        var trigger = BABYLON.GeometryTrigger.GetTriggerForLabel(label);
+
+        trigger.init(args);
+
+        this._triggers.push(trigger);
+    };
 
     BABYLON.Mesh.prototype.getBoundingInfo = function () {
         return this._boundingInfo;
@@ -443,8 +465,10 @@ var BABYLON = BABYLON || {};
             var vertexData = new BABYLON.VertexData();
             vertexData.set(data, kind);
 
-            this._geometry = new BABYLON.Geometry(BABYLON.Geometry.RandomId(), this._scene.getEngine(), vertexData, updatable, this);
+            this._geometry = new BABYLON.Geometry(BABYLON.Geometry.RandomId(), this._scene.getEngine(), vertexData, updatable);
             this._scene.pushGeometry(this._geometry);
+
+            this._geometry.applyToMesh(this);
         }
         else {
             this._geometry.setVerticesData(data, kind, updatable);
@@ -463,8 +487,10 @@ var BABYLON = BABYLON || {};
             var vertexData = new BABYLON.VertexData();
             vertexData.indices = indices;
 
-            this._geometry = new BABYLON.Geometry(BABYLON.Geometry.RandomId(), this._scene.getEngine(), vertexData, false, this); // todo: updatable?
+            this._geometry = new BABYLON.Geometry(BABYLON.GeometryLevel.RandomId(), this._scene.getEngine(), vertexData, false); // todo: updatable?
             this._scene.pushGeometry(this._geometry);
+
+            this._geometry.applyToMesh(this);
         }
         else {
             this._geometry.setIndices(indices);

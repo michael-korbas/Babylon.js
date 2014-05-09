@@ -60,7 +60,10 @@
   <script src="Babylon/Materials/textures/babylon.baseTexture.js"></script>
   <script src="Babylon/Mesh/babylon.subMesh.js"></script>
   <script src="Babylon/Mesh/babylon.mesh.js"></script>
+  <script src="Babylon/Mesh/babylon.geometryManager.js"></script>
   <script src="Babylon/Mesh/babylon.geometry.js"></script>
+  <script src="Babylon/Mesh/Trigger/babylon.distanceGeometryTrigger.js"></script>
+  <script src="Babylon/Mesh/babylon.geometryTrigger.js"></script>
   <script src="Babylon/Mesh/babylon.mesh.vertexData.js"></script>
   <script src="Babylon/Mesh/babylon.vertexBuffer.js"></script>
   <script src="Babylon/babylon.scene.js"></script>
