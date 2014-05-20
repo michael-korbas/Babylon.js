@@ -178,6 +178,15 @@ var BABYLON = BABYLON || {};
             return false;
         }
 
+        for (var index = 0; index < this._geometries.length; index++) {
+            var geometry = this._geometries[index];
+            
+            // todo: should be isReady
+            if (geometry.delayLoadState === BABYLON.Engine.DELAYLOADSTATE_LOADING) {
+                return false;
+            }
+        }
+
         for (var index = 0; index < this.meshes.length; index++) {
             var mesh = this.meshes[index];
             var mat = mesh.material;

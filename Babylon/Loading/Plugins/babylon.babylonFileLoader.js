@@ -443,63 +443,46 @@ var BABYLON = BABYLON || {};
         return torusKnot;
     };
 
-    var parseVertexData = function (parsedVertexData, scene) {
+    var parseVertexData = function (parsedVertexData, scene, rootUrl) {
         if (parseGeometry(parsedVertexData, scene)) {
             return null; // null since geometry could be a primitive
         }
 
-        var vertexData = new BABYLON.VertexData();
+        var geometry = new BABYLON.Geometry(parsedVertexData.id, scene.getEngine());
 
-        // positions
-        var positions = parsedVertexData.positions;
-        if (positions) {
-            vertexData.set(positions, BABYLON.VertexBuffer.PositionKind);
-        }
-
-        // normals
-        var normals = parsedVertexData.normals;
-        if (normals) {
-            vertexData.set(normals, BABYLON.VertexBuffer.NormalKind);
-        }
-
-        // uvs
-        var uvs = parsedVertexData.uvs;
-        if (uvs) {
-            vertexData.set(uvs, BABYLON.VertexBuffer.UVKind);
-        }
-        
-        // uv2s
-        var uv2s = parsedVertexData.uv2s;
-        if (uv2s) {
-            vertexData.set(uv2s, BABYLON.VertexBuffer.UV2Kind);
-        }
-
-        // colors
-        var colors = parsedVertexData.colors;
-        if (colors) {
-            vertexData.set(colors, BABYLON.VertexBuffer.ColorKind);
-        }
-
-        // matricesIndices
-        var matricesIndices = parsedVertexData.matricesIndices;
-        if (matricesIndices) {
-            vertexData.set(matricesIndices, BABYLON.VertexBuffer.MatricesIndicesKind);
-        }
-
-        // matricesWeights
-        var matricesWeights = parsedVertexData.matricesWeights;
-        if (matricesWeights) {
-            vertexData.set(matricesWeights, BABYLON.VertexBuffer.MatricesWeightsKind);
-        }
-
-        // indices
-        var indices = parsedVertexData.indices;
-        if (indices) {
-            vertexData.indices = indices;
-        }
-
-        geometry = new BABYLON.Geometry(parsedVertexData.id, scene.getEngine(), vertexData, parsedVertexData.updatable, null);
         BABYLON.Tags.AddTagsTo(geometry, parsedVertexData.tags);
+
+        if (parsedVertexData.delayLoadingFile) {
+            geometry.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_NOTLOADED;
+            geometry.delayLoadingFile = rootUrl + parsedVertexData.delayLoadingFile;
+            geometry._boundingInfo = new BABYLON.BoundingInfo(BABYLON.Vector3.FromArray(parsedVertexData.boundingBoxMinimum), BABYLON.Vector3.FromArray(parsedVertexData.boundingBoxMaximum));
+
+            geometry._delayInfo = [];
+            if (parsedVertexData.hasUVs) {
+                geometry._delayInfo.push(BABYLON.VertexBuffer.UVKind);
+            }
+
+            if (parsedVertexData.hasUVs2) {
+                geometry._delayInfo.push(BABYLON.VertexBuffer.UV2Kind);
+            }
+
+            if (parsedVertexData.hasColors) {
+                geometry._delayInfo.push(BABYLON.VertexBuffer.ColorKind);
+            }
+
+            if (parsedVertexData.hasMatricesIndices) {
+                geometry._delayInfo.push(BABYLON.VertexBuffer.MatricesIndicesKind);
+            }
+
+            if (parsedVertexData.hasMatricesWeights) {
+                geometry._delayInfo.push(BABYLON.VertexBuffer.MatricesWeightsKind);
+            }
+
+            geometry._delayLoadingFunction = importVertexData;
+
+        } else {
+            importVertexData(parsedVertexData, geometry);
+        }
 
         scene.pushGeometry(geometry, true);
 
@@ -545,7 +528,7 @@ var BABYLON = BABYLON || {};
         }
 
         // Geometry
-        if (parsedMesh.delayLoadingFile) { // todo (geometries in separate files)
+        if (parsedMesh.delayLoadingFile) {
             mesh.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_NOTLOADED;
             mesh.delayLoadingFile = rootUrl + parsedMesh.delayLoadingFile;
             mesh._boundingInfo = new BABYLON.BoundingInfo(BABYLON.Vector3.FromArray(parsedMesh.boundingBoxMinimum), BABYLON.Vector3.FromArray(parsedMesh.boundingBoxMaximum));
@@ -637,6 +620,60 @@ var BABYLON = BABYLON || {};
         }
 
         return false;
+    };
+
+    var importVertexData = function (parsedVertexData, geometry) {
+        var vertexData = new BABYLON.VertexData();
+
+        // positions
+        var positions = parsedVertexData.positions;
+        if (positions) {
+            vertexData.set(positions, BABYLON.VertexBuffer.PositionKind);
+        }
+
+        // normals
+        var normals = parsedVertexData.normals;
+        if (normals) {
+            vertexData.set(normals, BABYLON.VertexBuffer.NormalKind);
+        }
+
+        // uvs
+        var uvs = parsedVertexData.uvs;
+        if (uvs) {
+            vertexData.set(uvs, BABYLON.VertexBuffer.UVKind);
+        }
+
+        // uv2s
+        var uv2s = parsedVertexData.uv2s;
+        if (uv2s) {
+            vertexData.set(uv2s, BABYLON.VertexBuffer.UV2Kind);
+        }
+
+        // colors
+        var colors = parsedVertexData.colors;
+        if (colors) {
+            vertexData.set(colors, BABYLON.VertexBuffer.ColorKind);
+        }
+
+        // matricesIndices
+        var matricesIndices = parsedVertexData.matricesIndices;
+        if (matricesIndices) {
+            vertexData.set(matricesIndices, BABYLON.VertexBuffer.MatricesIndicesKind);
+        }
+
+        // matricesWeights
+        var matricesWeights = parsedVertexData.matricesWeights;
+        if (matricesWeights) {
+            vertexData.set(matricesWeights, BABYLON.VertexBuffer.MatricesWeightsKind);
+        }
+
+        // indices
+        var indices = parsedVertexData.indices;
+        if (indices) {
+            vertexData.indices = indices;
+        }
+
+        geometry.setAllVerticesData(vertexData, parsedVertexData.updatable);
     };
 
     var importGeometry = function (parsedGeometry, mesh) {
@@ -926,7 +963,7 @@ var BABYLON = BABYLON || {};
                 if (vertexData) {
                     for (var index = 0; index < vertexData.length; index++) {
                         var parsedVertexData = vertexData[index];
-                        parseVertexData(parsedVertexData, scene);
+                        parseVertexData(parsedVertexData, scene, rootUrl);
                     }
                 }
             }

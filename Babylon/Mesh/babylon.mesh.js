@@ -216,14 +216,22 @@ var BABYLON = BABYLON || {};
 
     BABYLON.Mesh.prototype.isVerticesDataPresent = function (kind) {
         if (!this._geometry) {
-            return false;
+            if (this._delayInfo) {
+                return this._delayInfo.indexOf(kind) !== -1;
+            }
         }
         return this._geometry.isVerticesDataPresent(kind);
     };
 
     BABYLON.Mesh.prototype.getVerticesDataKinds = function () {
         if (!this._geometry) {
-            return [];
+            var result = [];
+            if (this._delayInfo) {
+                for (var kind in this._delayInfo) {
+                    result.push(kind);
+                }
+            }
+            return result;
         }
         return this._geometry.getVerticesDataKinds();
     };
@@ -606,13 +614,19 @@ var BABYLON = BABYLON || {};
             return false;
         }
 
-        var result = this._boundingInfo.isInFrustum(frustumPlanes);
+        if (!this._boundingInfo.isInFrustum(frustumPlanes)) {
+            return false;
+        }
 
-        if (result && this.delayLoadState === BABYLON.Engine.DELAYLOADSTATE_NOTLOADED) {
-            this.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_LOADING;
-            var that = this;
+        var that = this;
 
-            this._scene._addPendingData(this);
+        if (this._geometry) {
+            this._geometry.load(this._scene);
+        }
+        else if (that.delayLoadState === BABYLON.Engine.DELAYLOADSTATE_NOTLOADED) {
+            that.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_LOADING;
+  
+            that._scene._addPendingData(that);
 
             BABYLON.Tools.LoadFile(this.delayLoadingFile, function (data) {
                 that._delayLoadingFunction(JSON.parse(data), that);
@@ -621,7 +635,7 @@ var BABYLON = BABYLON || {};
             }, function () { }, this._scene.database);
         }
 
-        return result;
+        return true;
     };
 
     BABYLON.Mesh.prototype.setMaterialByID = function (id) {

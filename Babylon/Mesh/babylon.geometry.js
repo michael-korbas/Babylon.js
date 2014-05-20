@@ -24,6 +24,12 @@ var BABYLON = BABYLON || {};
         }
     };
 
+    BABYLON.Geometry.prototype.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_NONE;
+
+    BABYLON.Geometry.prototype.isReady = function () {
+        return this.delayLoadState === BABYLON.Engine.DELAYLOADSTATE_LOADED || this.delayLoadState === BABYLON.Engine.DELAYLOADSTATE_NONE;
+    };
+
     BABYLON.Geometry.prototype.setAllVerticesData = function (vertexData, updatable) {
         vertexData.applyToGeometry(this, updatable);
     };
@@ -89,14 +95,25 @@ var BABYLON = BABYLON || {};
     };
 
     BABYLON.Geometry.prototype.getTotalVertices = function () {
+        if (!this.isReady()) {
+            return 0;
+        }
+
         return this._totalVertices;
     };
 
     BABYLON.Geometry.prototype.getVerticesData = function (kind) {
-        return this.getVertexBuffer(kind).getData();
+        var vertexBuffer = this.getVertexBuffer(kind);
+        if (!vertexBuffer){
+            return null;
+        }
+        return vertexBuffer.getData();
     };
 
     BABYLON.Geometry.prototype.getVertexBuffer = function (kind) {
+        if (!this.isReady()) {
+            return null;
+        }
         return this._vertexBuffers[kind];
     };
 
@@ -144,10 +161,16 @@ var BABYLON = BABYLON || {};
     };
 
     BABYLON.Geometry.prototype.getTotalIndices = function () {
+        if (!this.isReady()) {
+            return 0;
+        }
         return this._indices.length;
     };
 
     BABYLON.Geometry.prototype.getIndices = function () {
+        if (!this.isReady()) {
+            return null;
+        }
         return this._indices;
     };
 
@@ -173,10 +196,7 @@ var BABYLON = BABYLON || {};
     };
 
     BABYLON.Geometry.prototype.applyToMesh = function (mesh) {
-        var meshes = this._meshes;
-
-        var index = meshes.indexOf(mesh);
-        if (index !== -1) {
+        if (mesh._geometry === this && this._meshes.length > 0) {
             return;
         }
 
@@ -185,18 +205,32 @@ var BABYLON = BABYLON || {};
             previousGeometry.releaseForMesh(mesh);
         }
 
-        var numOfMeshes = meshes.length;
+        var meshes = this._meshes;
+        var numOfMeshes = meshes.length + 1;
 
         // must be done before setting vertexBuffers because of mesh._createGlobalSubMesh()
         mesh._geometry = this;
 
+        meshes.push(mesh);
+
+        if (this.isReady()) {
+            this._applyToMesh(mesh);
+        }
+        else {
+            mesh._boundingInfo = this._boundingInfo;
+        }
+    };
+
+    BABYLON.Geometry.prototype._applyToMesh = function (mesh) {
+        var numOfMeshes = this._meshes.length;
+
         // vertexBuffers
         for (var kind in this._vertexBuffers) {
-            if (numOfMeshes === 0) {
+            if (numOfMeshes === 1) {
                 this._vertexBuffers[kind].create();
             }
-            this._vertexBuffers[kind]._buffer.references = numOfMeshes + 1;
-            
+            this._vertexBuffers[kind]._buffer.references = numOfMeshes;
+
             if (kind === BABYLON.VertexBuffer.PositionKind) {
                 mesh._resetPointsArrayCache();
 
@@ -208,14 +242,50 @@ var BABYLON = BABYLON || {};
         }
 
         // indexBuffer
-        if (numOfMeshes === 0 && this._indices) {
+        if (numOfMeshes === 1 && this._indices) {
             this._indexBuffer = this._engine.createIndexBuffer(this._indices);
         }
         if (this._indexBuffer) {
-            this._indexBuffer.references = numOfMeshes + 1;
+            this._indexBuffer.references = numOfMeshes;
+        }
+    };
+
+    BABYLON.Geometry.prototype.load = function(scene, onLoaded) {
+        if (this.delayLoadState === BABYLON.Engine.DELAYLOADSTATE_LOADING) {
+            return;
         }
 
-        meshes.push(mesh);
+        if (this.isReady()) {
+            if (onLoaded) {
+                onLoaded();
+            }
+            return;
+        }
+
+        this.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_LOADING;
+
+        scene._addPendingData(this);
+
+        var that = this;
+
+        BABYLON.Tools.LoadFile(this.delayLoadingFile, function (data) {
+            that._delayLoadingFunction(JSON.parse(data), that);
+
+            that.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_LOADED;
+            that._delayInfo = [];
+
+            scene._removePendingData(that);
+
+            var meshes = that._meshes;
+            var numOfMeshes = meshes.length;
+            for (var index = 0; index < numOfMeshes; index++) {
+                that._applyToMesh(meshes[index]);
+            }
+
+            if (onLoaded) {
+                onLoaded();
+            }
+        }, function () { }, scene.database);
     };
 
     BABYLON.Geometry.prototype.removeMeshReference = function (mesh) {
@@ -258,7 +328,14 @@ var BABYLON = BABYLON || {};
             }
         }
 
-        return new BABYLON.Geometry(id, this._engine, vertexData, updatable, null);
+        var geometry = new BABYLON.Geometry(id, this._engine, vertexData, updatable, null);
+
+        geometry.delayLoadState = this.delayLoadState;
+        geometry._delayLoadingFunction = this._delayLoadingFunction;
+        geometry._delayInfo = this._delayInfo;
+        geometry._boundingInfo = this._boundingInfo;
+
+        return geometry;
     };
 
     // Statics

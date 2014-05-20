@@ -42,9 +42,7 @@ var BABYLON = BABYLON || {};
     BABYLON.SubMesh.prototype.refreshBoundingInfo = function () {
         var data = this._mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
 
-        if (!data) {
-            return;
-        }
+        data = data || this._mesh._boundingInfo;
 
         var extend = BABYLON.Tools.ExtractMinAndMax(data, this.verticesStart, this.verticesCount);
         this._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);

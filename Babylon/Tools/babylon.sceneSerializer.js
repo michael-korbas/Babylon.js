@@ -348,7 +348,11 @@ var BABYLON = BABYLON || {};
         return serializationObject;
     };
 
+    var serializedGeometries = [];
     var serializeGeometry = function (geometry, serializationGeometries) {
+        if (serializedGeometries[geometry.id]) {
+            return;
+        }
         if (geometry instanceof BABYLON.Geometry.Primitives.Box) {
             serializationGeometries.boxes.push(serializeBox(geometry));
         }
@@ -376,6 +380,8 @@ var BABYLON = BABYLON || {};
         else {
             serializationGeometries.vertexData.push(serializeVertexData(geometry));
         }
+
+        serializedGeometries[geometry.id] = true;
     };
 
     var serializeGeometryBase = function (geometry) {
@@ -673,9 +679,13 @@ var BABYLON = BABYLON || {};
             serializationObject.geometries.torusKnots = [];
             serializationObject.geometries.vertexData = [];
 
+            serializedGeometries = [];
             for (var index = 0; index < scene._geometries.length; index++) {
                 var geometry = scene._geometries[index];
-                serializeGeometry(geometry, serializationObject.geometries);
+
+                if (geometry.isReady()) {
+                    serializeGeometry(geometry, serializationObject.geometries);
+                }
             }
 
             // Meshes

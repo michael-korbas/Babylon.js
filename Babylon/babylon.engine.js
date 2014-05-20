@@ -309,7 +309,10 @@ var BABYLON = BABYLON || {};
         var vbo = this._gl.createBuffer();
         this._gl.bindBuffer(this._gl.ARRAY_BUFFER, vbo);
         this._gl.bufferData(this._gl.ARRAY_BUFFER, new Float32Array(vertices), this._gl.STATIC_DRAW);
+
         this._gl.bindBuffer(this._gl.ARRAY_BUFFER, null);
+        this._cachedVertexBuffers = null;
+
         vbo.references = 1;
         return vbo;
     };
@@ -318,7 +321,10 @@ var BABYLON = BABYLON || {};
         var vbo = this._gl.createBuffer();
         this._gl.bindBuffer(this._gl.ARRAY_BUFFER, vbo);
         this._gl.bufferData(this._gl.ARRAY_BUFFER, capacity, this._gl.DYNAMIC_DRAW);
+
         this._gl.bindBuffer(this._gl.ARRAY_BUFFER, null);
+        this._cachedVertexBuffers = null;
+
         vbo.references = 1;
         return vbo;
     };
