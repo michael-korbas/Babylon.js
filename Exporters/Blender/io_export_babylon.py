@@ -165,6 +165,8 @@ class Export_babylon(bpy.types.Operator, ExportHelper):
         Export_babylon.write_float(file_handler, "type", light_type)
         if light_type == 0:
             Export_babylon.write_vector(file_handler, "position", object.location)
+            if object.data.use_sphere:
+                Export_babylon.write_float(file_handler, "range", object.data.distance)
         elif light_type == 1:
             direction = Export_babylon.getDirection(object.matrix_world)
             Export_babylon.write_vector(file_handler, "position", object.location)
@@ -175,6 +177,8 @@ class Export_babylon(bpy.types.Operator, ExportHelper):
             Export_babylon.write_vector(file_handler, "direction", direction)
             Export_babylon.write_float(file_handler, "angle", object.data.spot_size)
             Export_babylon.write_float(file_handler, "exponent", object.data.spot_blend * 2)
+            if object.data.use_sphere:
+                Export_babylon.write_float(file_handler, "range", object.data.distance)
         else:
             matrix_world = object.matrix_world.copy()
             matrix_world.translation = mathutils.Vector((0, 0, 0))
@@ -779,13 +783,13 @@ class Export_babylon(bpy.types.Operator, ExportHelper):
         file_handler.write("]")         
         file_handler.write("}") 
 
-    def export_bone_matrix(armature, bone, label, file_handler):
+    def get_bone_matrix(armature, bone):
         SystemMatrix = Matrix.Scale(-1, 4, Vector((0, 0, 1))) * Matrix.Rotation(radians(-90), 4, 'X')
 
         if (bone.parent):
-            Export_babylon.write_matrix4(file_handler, label, (SystemMatrix * armature.matrix_world * bone.parent.matrix).inverted() * (SystemMatrix * armature.matrix_world * bone.matrix))
+            return (SystemMatrix * armature.matrix_world * bone.parent.matrix).inverted() * (SystemMatrix * armature.matrix_world * bone.matrix)
         else:
-            Export_babylon.write_matrix4(file_handler, label, SystemMatrix * armature.matrix_world * bone.matrix)
+            return SystemMatrix * armature.matrix_world * bone.matrix
 
 
     def export_bones(armature, scene, file_handler, id):
@@ -807,7 +811,7 @@ class Export_babylon(bpy.types.Operator, ExportHelper):
             Export_babylon.write_string(file_handler, "name", bone.name, True)
             Export_babylon.write_int(file_handler, "index", j)
 
-            Export_babylon.export_bone_matrix(armature, bone, "matrix", file_handler)
+            Export_babylon.write_matrix4(file_handler, "matrix", Export_babylon.get_bone_matrix(armature, bone))
 
             if (bone.parent):
                 parentId = 0
@@ -844,15 +848,22 @@ class Export_babylon(bpy.types.Operator, ExportHelper):
 
         #keys
         file_handler.write(",\"keys\":[")
+
+        previousBoneMatrix = None
                         
         for Frame in range(start_frame, end_frame + 1):
                 
+            bpy.context.scene.frame_set(Frame)
+            currentBoneMatrix = Export_babylon.get_bone_matrix(armature, bone)
+
+            if (Frame != end_frame and currentBoneMatrix == previousBoneMatrix):
+                continue
+
             file_handler.write("{")
 
             Export_babylon.write_int(file_handler, "frame", Frame, True)
-            bpy.context.scene.frame_set(Frame)
-
-            Export_babylon.export_bone_matrix(armature, bone, "values", file_handler)
+            Export_babylon.write_matrix4(file_handler, "values", currentBoneMatrix)
+            previousBoneMatrix = currentBoneMatrix
 
             if Frame == end_frame:
                 file_handler.write("}")

@@ -48,11 +48,18 @@ var BABYLON = BABYLON || {};
                 }
 
                 if (onsuccess) {
+                    scene.importedMeshesFiles.push(rootUrl + sceneFilename);
                     onsuccess(meshes, particleSystems, skeletons);
                 }
             }, progressCallBack, database);
         },
 
+        /**
+        * Load a scene
+        * @param rootUrl a string that defines the root url for scene and resources
+        * @param sceneFilename a string that defines the name of the scene file. can start with "data:" following by the stringified version of the scene
+        * @param engine is the instance of BABYLON.Engine to use to create the scene
+        */
         Load: function (rootUrl, sceneFilename, engine, onsuccess, progressCallBack, onerror) {
 
             var plugin = this._getPluginForFilename(sceneFilename.name || sceneFilename);
@@ -74,6 +81,12 @@ var BABYLON = BABYLON || {};
                     onsuccess(scene);
                 }
             };
+
+            if (sceneFilename.substr(0, 5) === "data:") {
+                // Direct load
+                loadSceneFromData(sceneFilename.substr(5));
+                return;
+            }
 
             if (rootUrl.indexOf("file:") === -1) {
                 // Checking if a manifest file has been set for this scene and if offline mode has been requested

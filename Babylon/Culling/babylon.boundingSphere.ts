@@ -5,6 +5,8 @@
         public centerWorld: Vector3;
         public radiusWorld: number;
 
+        private _tempRadiusVector = Vector3.Zero();
+
         constructor(public minimum: Vector3, public maximum: Vector3) {
             var distance = BABYLON.Vector3.Distance(minimum, maximum);
 
@@ -16,9 +18,10 @@
         }
 
         // Methods
-        public _update(world: Matrix, scale: number = 1.0): void {
+        public _update(world: Matrix): void {
             BABYLON.Vector3.TransformCoordinatesToRef(this.center, world, this.centerWorld);
-            this.radiusWorld = this.radius * scale;
+            BABYLON.Vector3.TransformNormalFromFloatsToRef(1.0, 0, 0, world, this._tempRadiusVector);
+            this.radiusWorld = this._tempRadiusVector.length() * this.radius;
         }
 
         public isInFrustum(frustumPlanes: Plane[]): boolean {
@@ -37,7 +40,7 @@
 
             var distance = Math.sqrt((x * x) + (y * y) + (z * z));
 
-            if (this.radiusWorld < distance)
+            if (Math.abs(this.radiusWorld - distance) < Engine.Epsilon)
                 return false;
 
             return true;

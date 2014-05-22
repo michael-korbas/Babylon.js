@@ -32,9 +32,9 @@
         }
 
         // Methods
-        public _update(world: Matrix, scale: number = 1.0) {
+        public _update(world: Matrix) {
             this.boundingBox._update(world);
-            this.boundingSphere._update(world, scale);
+            this.boundingSphere._update(world);
         }
 
         public isInFrustum(frustumPlanes: Plane[]): boolean {
@@ -44,7 +44,7 @@
             return this.boundingBox.isInFrustum(frustumPlanes);
         }
 
-        public _checkCollision(collider): boolean {
+        public _checkCollision(collider: Collider): boolean {
             return collider._canDoCollision(this.boundingSphere.centerWorld, this.boundingSphere.radiusWorld, this.boundingBox.minimumWorld, this.boundingBox.maximumWorld);
         }
 

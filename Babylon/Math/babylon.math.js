@@ -2,6 +2,9 @@
 (function (BABYLON) {
     var Color3 = (function () {
         function Color3(r, g, b) {
+            if (typeof r === "undefined") { r = 0; }
+            if (typeof g === "undefined") { g = 0; }
+            if (typeof b === "undefined") { b = 0; }
             this.r = r;
             this.g = g;
             this.b = b;
@@ -104,6 +107,31 @@
             var b = start.b + ((end.b - start.b) * amount);
 
             return new Color3(r, g, b);
+        };
+
+        Color3.Red = function () {
+            return new Color3(1, 0, 0);
+        };
+        Color3.Green = function () {
+            return new Color3(0, 1, 0);
+        };
+        Color3.Blue = function () {
+            return new Color3(0, 0, 1);
+        };
+        Color3.Black = function () {
+            return new Color3(0, 0, 0);
+        };
+        Color3.White = function () {
+            return new Color3(1, 1, 1);
+        };
+        Color3.Purple = function () {
+            return new Color3(0.5, 0, 0.5);
+        };
+        Color3.Magenta = function () {
+            return new Color3(1, 0, 1);
+        };
+        Color3.Yellow = function () {
+            return new Color3(1, 1, 0);
         };
         return Color3;
     })();
@@ -232,6 +260,11 @@
             this.toArray(result, 0);
 
             return result;
+        };
+
+        Vector2.prototype.copyFrom = function (source) {
+            this.x = source.x;
+            this.y = source.y;
         };
 
         Vector2.prototype.add = function (otherVector) {
@@ -749,10 +782,10 @@
             matrix.invert();
             source.x = source.x / viewportWidth * 2 - 1;
             source.y = -(source.y / viewportHeight * 2 - 1);
-            var vector = Vector3.TransformCoordinates(source, matrix);
+            var vector = BABYLON.Vector3.TransformCoordinates(source, matrix);
             var num = source.x * matrix.m[3] + source.y * matrix.m[7] + source.z * matrix.m[11] + matrix.m[15];
 
-            if (Math.abs(num) < 1.0) {
+            if (BABYLON.Tools.WithinEpsilon(num, 1.0)) {
                 vector = vector.scale(1.0 / num);
             }
 
@@ -1612,6 +1645,10 @@
         };
 
         // Methods
+        Plane.prototype.clone = function () {
+            return new Plane(this.normal.x, this.normal.y, this.normal.z, this.d);
+        };
+
         Plane.prototype.normalize = function () {
             var norm = (Math.sqrt((this.normal.x * this.normal.x) + (this.normal.y * this.normal.y) + (this.normal.z * this.normal.z)));
             var magnitude = 0;
@@ -1721,8 +1758,8 @@
             this.height = height;
         }
         Viewport.prototype.toGlobal = function (engine) {
-            var width = engine.getRenderWidth() * engine.getHardwareScalingLevel();
-            var height = engine.getRenderHeight() * engine.getHardwareScalingLevel();
+            var width = engine.getRenderWidth();
+            var height = engine.getRenderHeight();
             return new Viewport(this.x * width, this.y * height, this.width * width, this.height * height);
         };
         return Viewport;
@@ -1929,11 +1966,7 @@
                 return null;
             }
 
-            return {
-                bu: bu,
-                bv: bv,
-                distance: Vector3.Dot(this._edge2, this._qvec) * invdet
-            };
+            return new BABYLON.IntersectionInfo(bu, bv, Vector3.Dot(this._edge2, this._qvec) * invdet);
         };
 
         // Statics

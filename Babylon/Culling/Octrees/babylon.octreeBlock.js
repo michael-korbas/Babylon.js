@@ -2,8 +2,8 @@
 (function (BABYLON) {
     var OctreeBlock = (function () {
         function OctreeBlock(minPoint, maxPoint, capacity) {
-            this.meshes = [];
-            this.subMeshes = [];
+            this.meshes = new Array();
+            this.subMeshes = new Array();
             this._boundingVectors = new Array();
             this._capacity = capacity;
 
@@ -46,10 +46,12 @@
                 this.meshes.push(mesh);
 
                 this.subMeshes[localMeshIndex] = [];
-                for (var subIndex = 0; subIndex < mesh.subMeshes.length; subIndex++) {
-                    var subMesh = mesh.subMeshes[subIndex];
-                    if (mesh.subMeshes.length === 1 || subMesh.getBoundingInfo().boundingBox.intersectsMinMax(this._minPoint, this._maxPoint)) {
-                        this.subMeshes[localMeshIndex].push(subMesh);
+                if (mesh.subMeshes) {
+                    for (var subIndex = 0; subIndex < mesh.subMeshes.length; subIndex++) {
+                        var subMesh = mesh.subMeshes[subIndex];
+                        if (mesh.subMeshes.length === 1 || subMesh.getBoundingInfo().boundingBox.intersectsMinMax(this._minPoint, this._maxPoint)) {
+                            this.subMeshes[localMeshIndex].push(subMesh);
+                        }
                     }
                 }
             }

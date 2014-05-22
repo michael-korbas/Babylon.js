@@ -39,14 +39,11 @@
     <Resource Include="..\..\..\cannon.js">
       <Link>cannon.js</Link>
     </Resource>
-    <Resource Include="..\..\..\babylon.*.*.*.js">
+    <Resource Include="..\..\..\babylon.*.*.js">
       <Link>%(Filename)%(Extension)</Link>
     </Resource>
-    <Resource Include="..\..\..\Babylon\**\*.*">
-      <Link>Babylon\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Resource>
-    <Resource Include="..\..\..\Typescript\**\*.*">
-      <Link>Typescript\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    <Resource Include="..\..\..\Babylon\**\*.js">
+      <Link>Babylon\%(RecursiveDir)js\%(Filename)%(Extension)</Link>
     </Resource>
   </ItemGroup>
   <ItemGroup>
@@ -55,8 +52,29 @@
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    <TypeScriptSourceMap>true</TypeScriptSourceMap>
   </PropertyGroup>
+  <Choose>
+    <When Condition="Exists('$(VSToolsPath)\TypeScript\Microsoft.TypeScript.targets')">
+        <ItemGroup>
+            <TypeScriptCompile Include="..\..\..\Babylon\**\*.ts">
+              <Link>Babylon\%(RecursiveDir)%(Filename)%(Extension)</Link>
+            </TypeScriptCompile>
+        </ItemGroup>
+    </When>
+    <Otherwise>
+        <ItemGroup>
+            <Resource Include="..\..\..\Babylon\**\*.ts">
+                <Link>Babylon\%(RecursiveDir)%(Filename)%(Extension)</Link>
+            </Resource>
+        </ItemGroup>
+    </Otherwise>
+  </Choose>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <TypeScriptTarget>ES5</TypeScriptTarget>
+  </PropertyGroup>
+  <Import Project="$(VSToolsPath)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(VSToolsPath)\TypeScript\Microsoft.TypeScript.targets')" />
   <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
   <ProjectExtensions>

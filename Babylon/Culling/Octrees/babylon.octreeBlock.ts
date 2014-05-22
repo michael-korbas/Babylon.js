@@ -1,7 +1,7 @@
 ﻿module BABYLON {
     export class OctreeBlock {
-        public meshes = [];
-        public subMeshes = [];
+        public meshes = new Array<Mesh>();
+        public subMeshes = new Array <Array<SubMesh>>();
         public blocks: Array<OctreeBlock>;
 
         private _capacity: number;
@@ -38,7 +38,7 @@
         }
 
         // Methods
-        public addMesh(mesh): void {
+        public addMesh(mesh: Mesh): void {
             if (this.blocks) {
                 for (var index = 0; index < this.blocks.length; index++) {
                     var block = this.blocks[index];
@@ -52,10 +52,12 @@
                 this.meshes.push(mesh);
 
                 this.subMeshes[localMeshIndex] = [];
-                for (var subIndex = 0; subIndex < mesh.subMeshes.length; subIndex++) {
-                    var subMesh = mesh.subMeshes[subIndex];
-                    if (mesh.subMeshes.length === 1 || subMesh.getBoundingInfo().boundingBox.intersectsMinMax(this._minPoint, this._maxPoint)) {
-                        this.subMeshes[localMeshIndex].push(subMesh);
+                if (mesh.subMeshes) {
+                    for (var subIndex = 0; subIndex < mesh.subMeshes.length; subIndex++) {
+                        var subMesh = mesh.subMeshes[subIndex];
+                        if (mesh.subMeshes.length === 1 || subMesh.getBoundingInfo().boundingBox.intersectsMinMax(this._minPoint, this._maxPoint)) {
+                            this.subMeshes[localMeshIndex].push(subMesh);
+                        }
                     }
                 }
             }
@@ -65,14 +67,14 @@
             }
         }
 
-        public addEntries(meshes): void {
+        public addEntries(meshes: Mesh[]): void {
             for (var index = 0; index < meshes.length; index++) {
                 var mesh = meshes[index];
                 this.addMesh(mesh);
             }
         }
 
-        public select(frustumPlanes: Plane[], selection): void {
+        public select(frustumPlanes: Plane[], selection: OctreeBlock[]): void {
             if (this.blocks) {
                 for (var index = 0; index < this.blocks.length; index++) {
                     var block = this.blocks[index];

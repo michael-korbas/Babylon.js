@@ -18,8 +18,6 @@ var BABYLON = BABYLON || {};
         this.additionnalRenderLoopLogicCallback = p_additionnalRenderLoopLogicCallback;
         this.textureLoadingCallback = p_textureLoadingCallback;
         this.startingProcessingFilesCallback = p_startingProcessingFilesCallback;
-
-        this.engine.runRenderLoop(renderFunction);
     };
 
     // elementToMonitor is the HTML element that will listen to drag'n'drop events
@@ -96,6 +94,7 @@ var BABYLON = BABYLON || {};
             // If a ".babylon" file has been provided
             if (sceneFileToLoad) {
                 if (that.currentScene) {
+                    that.engine.stopRenderLoop();
                     that.currentScene.dispose();
                 }
 
@@ -105,10 +104,13 @@ var BABYLON = BABYLON || {};
                     // Wait for textures and shaders to be ready
                     that.currentScene.executeWhenReady(function () {
                         // Attach camera to canvas inputs
-                        that.currentScene.activeCamera.attachControl(that.canvas);
+                        if (that.currentScene.activeCamera) {
+                            that.currentScene.activeCamera.attachControl(that.canvas);
+                        }
                         if (that.sceneLoadedCallback) {
                             that.sceneLoadedCallback(sceneFileToLoad, that.currentScene);
                         }
+                        that.engine.runRenderLoop(renderFunction);
                     });
                 }, function (progress) {
                     if (that.progressCallback) {
@@ -117,7 +119,7 @@ var BABYLON = BABYLON || {};
                 });
             }
             else {
-                console.log("Please provide a valid .babylon file.");
+                BABYLON.Tools.Error("Please provide a valid .babylon file.");
             }
         }
     };
