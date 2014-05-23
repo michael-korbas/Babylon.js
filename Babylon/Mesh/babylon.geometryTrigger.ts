@@ -1,9 +1,8 @@
-var BABYLON;
-(function (BABYLON) {
-    var GeometryTrigger = (function () {
-        function GeometryTrigger() {
-        }
-        GeometryTrigger.GetTriggerForLabel = function (label) {
+module BABYLON {
+    export class GeometryTrigger {
+        private static _registeredTriggers = [];
+
+        public static GetTriggerForLabel(label: string) {
             for (var index = 0; index < this._registeredTriggers.length; index++) {
                 var trigger = this._registeredTriggers[index];
 
@@ -18,16 +17,12 @@ var BABYLON;
                 }
             }
 
-            throw new Error("No trigger found for the label: " + label);
-        };
+            throw new Error("No trigger found for the label: " + label)
+        }
 
-        GeometryTrigger.RegisterTrigger = function (trigger) {
+        public static RegisterTrigger(trigger) {
             trigger.label = trigger.label.toLowerCase();
             this._registeredTriggers.push(trigger);
-        };
-        GeometryTrigger._registeredTriggers = [];
-        return GeometryTrigger;
-    })();
-    BABYLON.GeometryTrigger = GeometryTrigger;
-})(BABYLON || (BABYLON = {}));
-//# sourceMappingURL=babylon.geometryTrigger.js.map
+        }
+    }
+}

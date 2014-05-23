@@ -934,6 +934,20 @@
                 this._onBeforeRenderCallbacks[callbackIndex]();
             }
 
+            // Mesh triggers
+            for (var i = 0; i < this.meshes.length; i++) {
+                var mesh = this.meshes[i];
+                var geometryManager = mesh._geometryManager;
+
+                if (geometryManager) {
+                    for (var j = 0; j < geometryManager._triggers.length; j++) {
+                        var trigger = geometryManager._triggers[j];
+
+                        trigger.run(this, this.meshes[i]);
+                    }
+                }
+            }
+
             // Animations
             var deltaTime = BABYLON.Tools.GetDeltaTime();
             this._animationRatio = deltaTime * (60.0 / 1000.0);

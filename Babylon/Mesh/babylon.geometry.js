@@ -1,551 +1,597 @@
-﻿"use strict";
-
-var BABYLON = BABYLON || {};
-
-// mesh.getVertexStrideSize?
-// when we set vertices for a data, do we want to do it for all others "clones"?
-// how to be sure that engine is the same than the one of mesh? (constructor, CreateBox)
-// submeshes are not shared and are reset when setting positions
-
-(function () {
-    BABYLON.Geometry = function (id, engine, vertexData, updatable, level) {
-        this.id = id;
-        this.level = level || 0;
-        this._engine = engine;
-        this._meshes = [];
-
-        // vertexData
-        if (vertexData) {
-            this.setAllVerticesData(vertexData, updatable);
-        }
-        else {
+﻿var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var BABYLON;
+(function (BABYLON) {
+    var Geometry = (function () {
+        function Geometry(id, engine, vertexData, updatable, level) {
+            this.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_NONE;
             this._totalVertices = 0;
             this._indices = [];
-        }
-    };
+            this.id = id;
+            this._engine = engine;
+            this._meshes = [];
 
-    BABYLON.Geometry.prototype.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_NONE;
-
-    BABYLON.Geometry.prototype.isReady = function () {
-        return this.delayLoadState === BABYLON.Engine.DELAYLOADSTATE_LOADED || this.delayLoadState === BABYLON.Engine.DELAYLOADSTATE_NONE;
-    };
-
-    BABYLON.Geometry.prototype.setAllVerticesData = function (vertexData, updatable) {
-        vertexData.applyToGeometry(this, updatable);
-    };
-
-    BABYLON.Geometry.prototype.setVerticesData = function (data, kind, updatable) {
-        this._vertexBuffers = this._vertexBuffers || {};
-
-        if (this._vertexBuffers[kind]) {
-            this._vertexBuffers[kind].dispose();
-        }
-
-        this._vertexBuffers[kind] = new BABYLON.VertexBuffer(this._engine, data, kind, updatable, this._meshes.length === 0);
-
-        if (kind === BABYLON.VertexBuffer.PositionKind) {
-            var stride = this._vertexBuffers[kind].getStrideSize();
-
-            this._totalVertices = data.length / stride;
-
-            var extend = BABYLON.Tools.ExtractMinAndMax(data, 0, this._totalVertices);
-
-            var meshes = this._meshes;
-            var numOfMeshes = meshes.length;
-
-            for (var index = 0; index < numOfMeshes; index++) {
-                var mesh = meshes[index];
-                mesh._resetPointsArrayCache();
-                mesh._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);
-                mesh._createGlobalSubMesh();
-            }
-        }
-    };
-
-    BABYLON.Geometry.prototype.updateVerticesData = function (kind, data, updateExtends) {
-        var vertexBuffer = this.getVertexBuffer(kind);
-
-        if (!vertexBuffer) {
-            return;
-        }
-
-        vertexBuffer.update(data);
-
-        if (kind === BABYLON.VertexBuffer.PositionKind) {
-
-            var extend;
-
-            if (updateExtends) {
-                var stride = vertexBuffer.getStrideSize();
-                this._totalVertices = data.length / stride;
-                extend = BABYLON.Tools.ExtractMinAndMax(data, 0, this._totalVertices);
+            // vertexData
+            if (vertexData) {
+                this.setAllVerticesData(vertexData, updatable);
+            } else {
+                this._totalVertices = 0;
+                this._indices = [];
             }
 
-            var meshes = this._meshes;
-            var numOfMeshes = meshes.length;
+            this.level = level || 0;
+        }
+        Geometry.prototype.getEngine = function () {
+            return this._engine;
+        };
 
-            for (var index = 0; index < numOfMeshes; index++) {
-                var mesh = meshes[index];
-                mesh._resetPointsArrayCache();
-                if (updateExtends) {
-                    mesh._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);
-                }
+        Geometry.prototype.isReady = function () {
+            return this.delayLoadState === BABYLON.Engine.DELAYLOADSTATE_LOADED || this.delayLoadState === BABYLON.Engine.DELAYLOADSTATE_NONE;
+        };
+
+        Geometry.prototype.setAllVerticesData = function (vertexData, updatable) {
+            vertexData.applyToGeometry(this, updatable);
+        };
+
+        Geometry.prototype.setVerticesData = function (data, kind, updatable) {
+            this._vertexBuffers = this._vertexBuffers || {};
+
+            if (this._vertexBuffers[kind]) {
+                this._vertexBuffers[kind].dispose();
             }
-        }
-    };
 
-    BABYLON.Geometry.prototype.getTotalVertices = function () {
-        if (!this.isReady()) {
-            return 0;
-        }
-
-        return this._totalVertices;
-    };
-
-    BABYLON.Geometry.prototype.getVerticesData = function (kind) {
-        var vertexBuffer = this.getVertexBuffer(kind);
-        if (!vertexBuffer){
-            return null;
-        }
-        return vertexBuffer.getData();
-    };
-
-    BABYLON.Geometry.prototype.getVertexBuffer = function (kind) {
-        if (!this.isReady()) {
-            return null;
-        }
-        return this._vertexBuffers[kind];
-    };
-
-    BABYLON.Geometry.prototype.isVerticesDataPresent = function (kind) {
-        if (!this._vertexBuffers) {
-            if (this._delayInfo) {
-                return this._delayInfo.indexOf(kind) !== -1;
-            }
-            return false;
-        }
-        return this._vertexBuffers[kind] !== undefined;
-    };
-
-    BABYLON.Geometry.prototype.getVerticesDataKinds = function () {
-        var result = [];
-        if (!this._vertexBuffers && this._delayInfo) {
-            for (var kind in this._delayInfo) {
-                result.push(kind);
-            }
-        } else {
-            for (var kind in this._vertexBuffers) {
-                result.push(kind);
-            }
-        }
-
-        return result;
-    };
-
-    BABYLON.Geometry.prototype.setIndices = function (indices) {
-        if (this._indexBuffer) {
-            this._engine._releaseBuffer(this._indexBuffer);
-        }
-
-        this._indices = indices;
-        if (this._meshes.length !== 0 && this._indices) {
-            this._indexBuffer = this._engine.createIndexBuffer(this._indices);
-        }
-
-        var meshes = this._meshes;
-        var numOfMeshes = meshes.length;
-
-        for (var index = 0; index < numOfMeshes; index++) {
-            meshes[index]._createGlobalSubMesh();
-        }
-    };
-
-    BABYLON.Geometry.prototype.getTotalIndices = function () {
-        if (!this.isReady()) {
-            return 0;
-        }
-        return this._indices.length;
-    };
-
-    BABYLON.Geometry.prototype.getIndices = function () {
-        if (!this.isReady()) {
-            return null;
-        }
-        return this._indices;
-    };
-
-    BABYLON.Geometry.prototype.releaseForMesh = function (mesh) {
-        var meshes = this._meshes;
-        var index = meshes.indexOf(mesh);
-
-        if (index === -1) {
-            return;
-        }
-
-        for (var kind in this._vertexBuffers) {
-            this._vertexBuffers[kind].dispose();
-        }
-
-        if (this._indexBuffer && this._engine._releaseBuffer(this._indexBuffer)) {
-            this._indexBuffer = null;
-        }
-
-        meshes.splice(index, 1);
-
-        mesh._geometry = null;
-    };
-
-    BABYLON.Geometry.prototype.applyToMesh = function (mesh) {
-        if (mesh._geometry === this && this._meshes.length > 0) {
-            return;
-        }
-
-        var previousGeometry = mesh._geometry;
-        if (previousGeometry) {
-            previousGeometry.releaseForMesh(mesh);
-        }
-
-        var meshes = this._meshes;
-        var numOfMeshes = meshes.length + 1;
-
-        // must be done before setting vertexBuffers because of mesh._createGlobalSubMesh()
-        mesh._geometry = this;
-
-        meshes.push(mesh);
-
-        if (this.isReady()) {
-            this._applyToMesh(mesh);
-        }
-        else {
-            mesh._boundingInfo = this._boundingInfo;
-        }
-    };
-
-    BABYLON.Geometry.prototype._applyToMesh = function (mesh) {
-        var numOfMeshes = this._meshes.length;
-
-        // vertexBuffers
-        for (var kind in this._vertexBuffers) {
-            if (numOfMeshes === 1) {
-                this._vertexBuffers[kind].create();
-            }
-            this._vertexBuffers[kind]._buffer.references = numOfMeshes;
+            this._vertexBuffers[kind] = new BABYLON.VertexBuffer(this._engine, data, kind, updatable, this._meshes.length === 0);
 
             if (kind === BABYLON.VertexBuffer.PositionKind) {
-                mesh._resetPointsArrayCache();
+                var stride = this._vertexBuffers[kind].getStrideSize();
 
-                var extend = BABYLON.Tools.ExtractMinAndMax(this._vertexBuffers[kind].getData(), 0, this._totalVertices);
-                mesh._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);
+                this._totalVertices = data.length / stride;
 
-                mesh._createGlobalSubMesh();
+                var extend = BABYLON.Tools.ExtractMinAndMax(data, 0, this._totalVertices);
+
+                var meshes = this._meshes;
+                var numOfMeshes = meshes.length;
+
+                for (var index = 0; index < numOfMeshes; index++) {
+                    var mesh = meshes[index];
+                    mesh._resetPointsArrayCache();
+                    mesh._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);
+                    mesh._createGlobalSubMesh();
+                }
             }
-        }
+        };
 
-        // indexBuffer
-        if (numOfMeshes === 1 && this._indices) {
-            this._indexBuffer = this._engine.createIndexBuffer(this._indices);
-        }
-        if (this._indexBuffer) {
-            this._indexBuffer.references = numOfMeshes;
-        }
-    };
+        Geometry.prototype.updateVerticesData = function (kind, data, updateExtends) {
+            var vertexBuffer = this.getVertexBuffer(kind);
 
-    BABYLON.Geometry.prototype.load = function(scene, onLoaded) {
-        if (this.delayLoadState === BABYLON.Engine.DELAYLOADSTATE_LOADING) {
-            return;
-        }
-
-        if (this.isReady()) {
-            if (onLoaded) {
-                onLoaded();
+            if (!vertexBuffer) {
+                return;
             }
-            return;
-        }
 
-        this.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_LOADING;
+            vertexBuffer.update(data);
 
-        scene._addPendingData(this);
+            if (kind === BABYLON.VertexBuffer.PositionKind) {
+                var extend;
 
-        var that = this;
+                if (updateExtends) {
+                    var stride = vertexBuffer.getStrideSize();
+                    this._totalVertices = data.length / stride;
+                    extend = BABYLON.Tools.ExtractMinAndMax(data, 0, this._totalVertices);
+                }
 
-        BABYLON.Tools.LoadFile(this.delayLoadingFile, function (data) {
-            that._delayLoadingFunction(JSON.parse(data), that);
+                var meshes = this._meshes;
+                var numOfMeshes = meshes.length;
 
-            that.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_LOADED;
-            that._delayInfo = [];
+                for (var index = 0; index < numOfMeshes; index++) {
+                    var mesh = meshes[index];
+                    mesh._resetPointsArrayCache();
+                    if (updateExtends) {
+                        mesh._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);
+                    }
+                }
+            }
+        };
 
-            scene._removePendingData(that);
+        Geometry.prototype.getTotalVertices = function () {
+            if (!this.isReady()) {
+                return 0;
+            }
 
-            var meshes = that._meshes;
+            return this._totalVertices;
+        };
+
+        Geometry.prototype.getVerticesData = function (kind) {
+            var vertexBuffer = this.getVertexBuffer(kind);
+            if (!vertexBuffer) {
+                return null;
+            }
+            return vertexBuffer.getData();
+        };
+
+        Geometry.prototype.getVertexBuffer = function (kind) {
+            if (!this.isReady()) {
+                return null;
+            }
+            return this._vertexBuffers[kind];
+        };
+
+        Geometry.prototype.getVertexBuffers = function () {
+            if (!this.isReady()) {
+                return null;
+            }
+            return this._vertexBuffers;
+        };
+
+        Geometry.prototype.isVerticesDataPresent = function (kind) {
+            if (!this._vertexBuffers) {
+                if (this._delayInfo) {
+                    return this._delayInfo.indexOf(kind) !== -1;
+                }
+                return false;
+            }
+            return this._vertexBuffers[kind] !== undefined;
+        };
+
+        Geometry.prototype.getVerticesDataKinds = function () {
+            var result = [];
+            if (!this._vertexBuffers && this._delayInfo) {
+                for (var kind in this._delayInfo) {
+                    result.push(kind);
+                }
+            } else {
+                for (kind in this._vertexBuffers) {
+                    result.push(kind);
+                }
+            }
+
+            return result;
+        };
+
+        Geometry.prototype.setIndices = function (indices) {
+            if (this._indexBuffer) {
+                this._engine._releaseBuffer(this._indexBuffer);
+            }
+
+            this._indices = indices;
+            if (this._meshes.length !== 0 && this._indices) {
+                this._indexBuffer = this._engine.createIndexBuffer(this._indices);
+            }
+
+            var meshes = this._meshes;
             var numOfMeshes = meshes.length;
+
             for (var index = 0; index < numOfMeshes; index++) {
-                that._applyToMesh(meshes[index]);
+                meshes[index]._createGlobalSubMesh();
+            }
+        };
+
+        Geometry.prototype.getTotalIndices = function () {
+            if (!this.isReady()) {
+                return 0;
+            }
+            return this._indices.length;
+        };
+
+        Geometry.prototype.getIndices = function () {
+            if (!this.isReady()) {
+                return null;
+            }
+            return this._indices;
+        };
+
+        Geometry.prototype.getIndexBuffer = function () {
+            if (!this.isReady()) {
+                return null;
+            }
+            return this._indexBuffer;
+        };
+
+        Geometry.prototype.releaseForMesh = function (mesh) {
+            var meshes = this._meshes;
+            var index = meshes.indexOf(mesh);
+
+            if (index === -1) {
+                return;
             }
 
-            if (onLoaded) {
-                onLoaded();
+            for (var kind in this._vertexBuffers) {
+                this._vertexBuffers[kind].dispose();
             }
-        }, function () { }, scene.database);
-    };
 
-    BABYLON.Geometry.prototype.removeMeshReference = function (mesh) {
-        var index = this._meshes.indexOf(mesh);
-        this._meshes.splice(index, 1);
-    };
-
-    BABYLON.Geometry.prototype.dispose = function () {
-        for (var index = 0; index < numOfMeshes; index++) {
-            this.releaseForMesh(meshes[index]);
-        }
-        this._meshes = [];
-
-        for (var kind in this._vertexBuffers) {
-            this._vertexBuffers[kind].dispose();
-        }
-        this._vertexBuffers = [];
-        this._totalVertices = 0;
-
-        if (this._indexBuffer) {
-            this._engine._releaseBuffer(this._indexBuffer);
-        }
-        this._indexBuffer = null;
-        this._indices = [];
-    };
-
-    BABYLON.Geometry.prototype.copy = function (id) {
-        var vertexData = new BABYLON.VertexData();
-        vertexData.indices = this.getIndices();
-
-        var updatable = false;
-        var stopChecking = false;
-
-        for (var kind in this._vertexBuffers) {
-            vertexData.set(this.getVerticesData(kind), kind);
-            
-            if (!stopChecking) {
-                updatable = this.getVertexBuffer(kind).isUpdatable();
-                stopChecking = !updatable;
+            if (this._indexBuffer && this._engine._releaseBuffer(this._indexBuffer)) {
+                this._indexBuffer = null;
             }
-        }
 
-        var geometry = new BABYLON.Geometry(id, this._engine, vertexData, updatable, null);
+            meshes.splice(index, 1);
 
-        geometry.delayLoadState = this.delayLoadState;
-        geometry._delayLoadingFunction = this._delayLoadingFunction;
-        geometry._delayInfo = this._delayInfo;
-        geometry._boundingInfo = this._boundingInfo;
+            mesh._geometry = null;
+        };
 
-        return geometry;
-    };
+        Geometry.prototype.applyToMesh = function (mesh) {
+            if (mesh._geometry === this) {
+                return;
+            }
 
-    // Statics
-    // from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/2117523#answer-2117523
-    // be aware Math.random() could cause collisions
-    BABYLON.Geometry.RandomId = function () {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    };
+            var previousGeometry = mesh._geometry;
+            if (previousGeometry) {
+                previousGeometry.releaseForMesh(mesh);
+            }
 
-    BABYLON.Geometry.ExtractFromMesh = function (mesh, id) {
-        var geometry = mesh._geometry;
+            var meshes = this._meshes;
 
-        if (!geometry) {
-            return undefined;
-        }
+            // must be done before setting vertexBuffers because of mesh._createGlobalSubMesh()
+            mesh._geometry = this;
 
-        return geometry.copy(id);
-    };
+            mesh.getScene().pushGeometry(this);
 
-    /////// Primitives //////////////////////////////////////////////
+            meshes.push(mesh);
 
-    BABYLON.Geometry.Primitives = {};
+            if (this.isReady()) {
+                this._applyToMesh(mesh);
+            } else {
+                mesh._boundingInfo = this._boundingInfo;
+            }
+        };
 
-    /// Abstract class
+        Geometry.prototype._applyToMesh = function (mesh) {
+            var numOfMeshes = this._meshes.length;
 
-    BABYLON.Geometry.Primitives._Primitive = function (id, engine, vertexData, canBeRegenerated, mesh) {
-        this._beingRegenerated = true;
-        this._canBeRegenerated = canBeRegenerated;
-        BABYLON.Geometry.call(this, id, engine, vertexData, false, mesh); // updatable = false to be sure not to update vertices
-        this._beingRegenerated = false;
-    };
+            for (var kind in this._vertexBuffers) {
+                if (numOfMeshes === 1) {
+                    this._vertexBuffers[kind].create();
+                }
+                this._vertexBuffers[kind]._buffer.references = numOfMeshes;
 
-    BABYLON.Geometry.Primitives._Primitive.prototype = Object.create(BABYLON.Geometry.prototype);
+                if (kind === BABYLON.VertexBuffer.PositionKind) {
+                    mesh._resetPointsArrayCache();
 
-    BABYLON.Geometry.Primitives._Primitive.prototype.regenerate = function () {
-        if (!this._canBeRegenerated) {
-            return;
-        }
-        this._beingRegenerated = true;
-        this.setAllVerticesData(this._regenerateVertexData(), false);
-        this._beingRegenerated = false;
-    };
+                    var extend = BABYLON.Tools.ExtractMinAndMax(this._vertexBuffers[kind].getData(), 0, this._totalVertices);
+                    mesh._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);
 
-    BABYLON.Geometry.Primitives._Primitive.prototype.asNewGeometry = function (id) {
-        return BABYLON.Geometry.prototype.copy.call(this, id);
-    };
+                    mesh._createGlobalSubMesh();
+                }
+            }
 
-    // overrides
-    BABYLON.Geometry.Primitives._Primitive.prototype.setAllVerticesData = function (vertexData, updatable) {
-        if (!this._beingRegenerated) {
-            return;
-        }
-        BABYLON.Geometry.prototype.setAllVerticesData.call(this, vertexData, false);
-    };
+            // indexBuffer
+            if (numOfMeshes === 1 && this._indices) {
+                this._indexBuffer = this._engine.createIndexBuffer(this._indices);
+            }
+            if (this._indexBuffer) {
+                this._indexBuffer.references = numOfMeshes;
+            }
+        };
 
-    BABYLON.Geometry.Primitives._Primitive.prototype.setVerticesData = function (data, kind, updatable) {
-        if (!this._beingRegenerated) {
-            return;
-        }
-        BABYLON.Geometry.prototype.setVerticesData.call(this, data, kind, false);
-    };
+        Geometry.prototype.load = function (scene, onLoaded) {
+            var _this = this;
+            if (this.delayLoadState === BABYLON.Engine.DELAYLOADSTATE_LOADING) {
+                return;
+            }
 
-    // to override
-    BABYLON.Geometry.Primitives._Primitive.prototype._regenerateVertexData = function () {
-        throw new Error("Abstract method");
-    };
+            if (this.isReady()) {
+                if (onLoaded) {
+                    onLoaded();
+                }
+                return;
+            }
 
-    BABYLON.Geometry.Primitives._Primitive.prototype.copy = function (id) {
-        throw new Error("Must be overriden in sub-classes.");
-    };
+            this.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_LOADING;
 
-    //// Box
+            scene._addPendingData(this);
+            BABYLON.Tools.LoadFile(this.delayLoadingFile, function (data) {
+                _this._delayLoadingFunction(JSON.parse(data), _this);
 
-    BABYLON.Geometry.Primitives.Box = function (id, engine, canBeRegenerated, size, mesh) {
-        this.size = size;
+                _this.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_LOADED;
+                _this._delayInfo = [];
 
-        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
-    };
+                scene._removePendingData(_this);
 
-    BABYLON.Geometry.Primitives.Box.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+                var meshes = _this._meshes;
+                var numOfMeshes = meshes.length;
+                for (var index = 0; index < numOfMeshes; index++) {
+                    _this._applyToMesh(meshes[index]);
+                }
 
-    BABYLON.Geometry.Primitives.Box.prototype._regenerateVertexData = function () {
-        return BABYLON.VertexData.CreateBox(this.size); 
-    };
+                if (onLoaded) {
+                    onLoaded();
+                }
+            }, function () {
+            }, scene.database);
+        };
 
-    BABYLON.Geometry.Primitives.Box.prototype.copy = function (id) {
-        return new BABYLON.Geometry.Primitives.Box(id, this._engine, this._canBeRegenerated, this.size, null);
-    };
+        Geometry.prototype.dispose = function () {
+            var meshes = this._meshes;
+            var numOfMeshes = meshes.length;
 
-    //// Sphere
+            for (var index = 0; index < numOfMeshes; index++) {
+                this.releaseForMesh(meshes[index]);
+            }
+            this._meshes = [];
 
-    BABYLON.Geometry.Primitives.Sphere = function (id, engine, canBeRegenerated, segments, diameter, mesh) {
-        this.segments = segments;
-        this.diameter = diameter;
+            for (var kind in this._vertexBuffers) {
+                this._vertexBuffers[kind].dispose();
+            }
+            this._vertexBuffers = [];
+            this._totalVertices = 0;
 
-        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
-    };
+            if (this._indexBuffer) {
+                this._engine._releaseBuffer(this._indexBuffer);
+            }
+            this._indexBuffer = null;
+            this._indices = [];
 
-    BABYLON.Geometry.Primitives.Sphere.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+            this.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_NONE;
+            this.delayLoadingFile = null;
+            this._delayLoadingFunction = null;
+            this._delayInfo = [];
 
-    BABYLON.Geometry.Primitives.Sphere.prototype._regenerateVertexData = function () {
-        return BABYLON.VertexData.CreateSphere(this.segments, this.diameter);
-    };
+            this._boundingInfo = null; // todo: .dispose()
+        };
 
-    BABYLON.Geometry.Primitives.Sphere.prototype.copy = function (id) {
-        return new BABYLON.Geometry.Primitives.Sphere(id, this._engine, this._canBeRegenerated, this.segments, this.diameter, null);
-    };
+        Geometry.prototype.copy = function (id) {
+            var vertexData = new BABYLON.VertexData();
 
-    //// Cylinder
+            vertexData.indices = [];
 
-    BABYLON.Geometry.Primitives.Cylinder = function (id, engine, canBeRegenerated, height, diameterTop, diameterBottom, tessellation, mesh) {
-        this.height = height;
-        this.diameterTop = diameterTop;
-        this.diameterBottom = diameterBottom;
-        this.tessellation = tessellation;
+            var indices = this.getIndices();
+            for (var index = 0; index < indices.length; index++) {
+                vertexData.indices.push(indices[index]);
+            }
 
-        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
-    };
+            var updatable = false;
+            var stopChecking = false;
 
-    BABYLON.Geometry.Primitives.Cylinder.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+            for (var kind in this._vertexBuffers) {
+                vertexData.set(this.getVerticesData(kind), kind);
 
-    BABYLON.Geometry.Primitives.Cylinder.prototype._regenerateVertexData = function () {
-        return BABYLON.VertexData.CreateCylinder(this.height, this.diameterTop, this.diameterBottom, this.tessellation);
-    };
+                if (!stopChecking) {
+                    updatable = this.getVertexBuffer(kind).isUpdatable();
+                    stopChecking = !updatable;
+                }
+            }
 
-    BABYLON.Geometry.Primitives.Cylinder.prototype.copy = function (id) {
-        return new BABYLON.Geometry.Primitives.Cylinder(id, this._engine, this._canBeRegenerated, this.height, this.diameterTop, this.diameterBottom, this.tessellation, null);
-    };
+            var geometry = new BABYLON.Geometry(id, this._engine, vertexData, updatable, null);
 
-    //// Torus
+            geometry.delayLoadState = this.delayLoadState;
+            geometry.delayLoadingFile = this.delayLoadingFile;
+            geometry._delayLoadingFunction = this._delayLoadingFunction;
 
-    BABYLON.Geometry.Primitives.Torus = function (id, engine, canBeRegenerated, diameter, thickness, tessellation, mesh) {
-        this.diameter = diameter;
-        this.thickness = thickness;
-        this.tessellation = tessellation;
+            for (kind in this._delayInfo) {
+                geometry._delayInfo = geometry._delayInfo || [];
+                geometry._delayInfo.push(kind);
+            }
 
-        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
-    };
+            // Bounding info
+            var extend = BABYLON.Tools.ExtractMinAndMax(this.getVerticesData(BABYLON.VertexBuffer.PositionKind), 0, this.getTotalVertices());
+            geometry._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);
 
-    BABYLON.Geometry.Primitives.Torus.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+            return geometry;
+        };
 
-    BABYLON.Geometry.Primitives.Torus.prototype._regenerateVertexData = function () {
-        return BABYLON.VertexData.CreateTorus(this.diameter, this.thickness, this.tessellation);
-    };
+        // Statics
+        Geometry.ExtractFromMesh = function (mesh, id) {
+            var geometry = mesh._geometry;
 
-    BABYLON.Geometry.Primitives.Torus.prototype.copy = function (id) {
-        return new BABYLON.Geometry.Primitives.Torus(id, this._engine, this._canBeRegenerated, this.diameter, this.thickness, this.tessellation, null);
-    };
+            if (!geometry) {
+                return null;
+            }
 
-    //// Ground
+            return geometry.copy(id);
+        };
 
-    BABYLON.Geometry.Primitives.Ground = function (id, engine, canBeRegenerated, width, height, subdivisions, mesh) {
-        this.width = width;
-        this.height = height;
-        this.subdivisions = subdivisions;
+        // from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/2117523#answer-2117523
+        // be aware Math.random() could cause collisions
+        Geometry.RandomId = function () {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        };
+        return Geometry;
+    })();
+    BABYLON.Geometry = Geometry;
 
-        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
-    };
+    (function (Geometry) {
+        /////// Primitives //////////////////////////////////////////////
+        (function (Primitives) {
+            /// Abstract class
+            var _Primitive = (function (_super) {
+                __extends(_Primitive, _super);
+                function _Primitive(id, engine, vertexData, canBeRegenerated, mesh) {
+                    this._beingRegenerated = true;
+                    this._canBeRegenerated = canBeRegenerated;
+                    _super.call(this, id, engine, vertexData, false); // updatable = false to be sure not to update vertices
+                    this._beingRegenerated = false;
+                }
+                _Primitive.prototype.canBeRegenerated = function () {
+                    return this._canBeRegenerated;
+                };
 
-    BABYLON.Geometry.Primitives.Ground.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+                _Primitive.prototype.regenerate = function () {
+                    if (!this._canBeRegenerated) {
+                        return;
+                    }
+                    this._beingRegenerated = true;
+                    this.setAllVerticesData(this._regenerateVertexData(), false);
+                    this._beingRegenerated = false;
+                };
 
-    BABYLON.Geometry.Primitives.Ground.prototype._regenerateVertexData = function () {
-        return BABYLON.VertexData.CreateGround(this.width, this.height, this.subdivisions);
-    };
+                _Primitive.prototype.asNewGeometry = function (id) {
+                    return _super.prototype.copy.call(this, id);
+                };
 
-    BABYLON.Geometry.Primitives.Ground.prototype.copy = function (id) {
-        return new BABYLON.Geometry.Primitives.Ground(id, this._engine, this._canBeRegenerated, this.width, this.height, this.subdivisions, null);
-    };
+                // overrides
+                _Primitive.prototype.setAllVerticesData = function (vertexData, updatable) {
+                    if (!this._beingRegenerated) {
+                        return;
+                    }
+                    _super.prototype.setAllVerticesData.call(this, vertexData, false);
+                };
 
-    //// Plane
+                _Primitive.prototype.setVerticesData = function (data, kind, updatable) {
+                    if (!this._beingRegenerated) {
+                        return;
+                    }
+                    _super.prototype.setVerticesData.call(this, data, kind, false);
+                };
 
-    BABYLON.Geometry.Primitives.Plane = function (id, engine, canBeRegenerated, size, mesh) {
-        this.size = size;
+                // to override
+                // protected
+                _Primitive.prototype._regenerateVertexData = function () {
+                    throw new Error("Abstract method");
+                };
 
-        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
-    };
+                _Primitive.prototype.copy = function (id) {
+                    throw new Error("Must be overriden in sub-classes.");
+                };
+                return _Primitive;
+            })(Geometry);
+            Primitives._Primitive = _Primitive;
 
-    BABYLON.Geometry.Primitives.Plane.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+            var Box = (function (_super) {
+                __extends(Box, _super);
+                function Box(id, engine, size, canBeRegenerated, mesh) {
+                    this.size = size;
 
-    BABYLON.Geometry.Primitives.Plane.prototype._regenerateVertexData = function () {
-        return BABYLON.VertexData.CreatePlane(this.size);
-    };
+                    _super.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                }
+                Box.prototype._regenerateVertexData = function () {
+                    return BABYLON.VertexData.CreateBox(this.size);
+                };
 
-    BABYLON.Geometry.Primitives.Plane.prototype.copy = function (id) {
-        return new BABYLON.Geometry.Primitives.Plane(id, this._engine, this._canBeRegenerated, this.size, null);
-    };
+                Box.prototype.copy = function (id) {
+                    return new Box(id, this.getEngine(), this.size, this.canBeRegenerated(), null);
+                };
+                return Box;
+            })(_Primitive);
+            Primitives.Box = Box;
 
-    //// TorusKnot
+            var Sphere = (function (_super) {
+                __extends(Sphere, _super);
+                function Sphere(id, engine, segments, diameter, canBeRegenerated, mesh) {
+                    this.segments = segments;
+                    this.diameter = diameter;
 
-    BABYLON.Geometry.Primitives.TorusKnot = function (id, engine, canBeRegenerated, radius, tube, radialSegments, tubularSegments, p, q, mesh) {
-        this.radius = radius;
-        this.tube = tube;
-        this.radialSegments = radialSegments;
-        this.tubularSegments = tubularSegments;
-        this.p = p;
-        this.q = q;
+                    _super.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                }
+                Sphere.prototype._regenerateVertexData = function () {
+                    return BABYLON.VertexData.CreateSphere(this.segments, this.diameter);
+                };
 
-        BABYLON.Geometry.Primitives._Primitive.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
-    };
+                Sphere.prototype.copy = function (id) {
+                    return new Sphere(id, this.getEngine(), this.segments, this.diameter, this.canBeRegenerated(), null);
+                };
+                return Sphere;
+            })(_Primitive);
+            Primitives.Sphere = Sphere;
 
-    BABYLON.Geometry.Primitives.TorusKnot.prototype = Object.create(BABYLON.Geometry.Primitives._Primitive.prototype);
+            var Cylinder = (function (_super) {
+                __extends(Cylinder, _super);
+                function Cylinder(id, engine, height, diameterTop, diameterBottom, tessellation, canBeRegenerated, mesh) {
+                    this.height = height;
+                    this.diameterTop = diameterTop;
+                    this.diameterBottom = diameterBottom;
+                    this.tessellation = tessellation;
 
-    BABYLON.Geometry.Primitives.TorusKnot.prototype._regenerateVertexData = function () {
-        return BABYLON.VertexData.CreateTorusKnot(this.radius, this.tube, this.radialSegments, this.tubularSegments, this.p, this.q);
-    };
+                    _super.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                }
+                Cylinder.prototype._regenerateVertexData = function () {
+                    return BABYLON.VertexData.CreateCylinder(this.height, this.diameterTop, this.diameterBottom, this.tessellation);
+                };
 
-    BABYLON.Geometry.Primitives.TorusKnot.prototype.copy = function (id) {
-        return new BABYLON.Geometry.Primitives.TorusKnot(id, this._engine, this._canBeRegenerated, this.radius, this.tube, this.radialSegments, this.tubularSegments, this.p, this.q, null);
-    };
-})();
+                Cylinder.prototype.copy = function (id) {
+                    return new Cylinder(id, this.getEngine(), this.height, this.diameterTop, this.diameterBottom, this.tessellation, this.canBeRegenerated(), null);
+                };
+                return Cylinder;
+            })(_Primitive);
+            Primitives.Cylinder = Cylinder;
+
+            var Torus = (function (_super) {
+                __extends(Torus, _super);
+                function Torus(id, engine, diameter, thickness, tessellation, canBeRegenerated, mesh) {
+                    this.diameter = diameter;
+                    this.thickness = thickness;
+                    this.tessellation = tessellation;
+
+                    _super.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                }
+                Torus.prototype._regenerateVertexData = function () {
+                    return BABYLON.VertexData.CreateTorus(this.diameter, this.thickness, this.tessellation);
+                };
+
+                Torus.prototype.copy = function (id) {
+                    return new Torus(id, this.getEngine(), this.diameter, this.thickness, this.tessellation, this.canBeRegenerated(), null);
+                };
+                return Torus;
+            })(_Primitive);
+            Primitives.Torus = Torus;
+
+            var Ground = (function (_super) {
+                __extends(Ground, _super);
+                function Ground(id, engine, width, height, subdivisions, canBeRegenerated, mesh) {
+                    this.width = width;
+                    this.height = height;
+                    this.subdivisions = subdivisions;
+
+                    _super.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                }
+                Ground.prototype._regenerateVertexData = function () {
+                    return BABYLON.VertexData.CreateGround(this.width, this.height, this.subdivisions);
+                };
+
+                Ground.prototype.copy = function (id) {
+                    return new Ground(id, this.getEngine(), this.width, this.height, this.subdivisions, this.canBeRegenerated(), null);
+                };
+                return Ground;
+            })(_Primitive);
+            Primitives.Ground = Ground;
+
+            var Plane = (function (_super) {
+                __extends(Plane, _super);
+                function Plane(id, engine, size, canBeRegenerated, mesh) {
+                    this.size = size;
+
+                    _super.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                }
+                Plane.prototype._regenerateVertexData = function () {
+                    return BABYLON.VertexData.CreatePlane(this.size);
+                };
+
+                Plane.prototype.copy = function (id) {
+                    return new Plane(id, this.getEngine(), this.size, this.canBeRegenerated(), null);
+                };
+                return Plane;
+            })(_Primitive);
+            Primitives.Plane = Plane;
+
+            var TorusKnot = (function (_super) {
+                __extends(TorusKnot, _super);
+                function TorusKnot(id, engine, radius, tube, radialSegments, tubularSegments, p, q, canBeRegenerated, mesh) {
+                    this.radius = radius;
+                    this.tube = tube;
+                    this.radialSegments = radialSegments;
+                    this.tubularSegments = tubularSegments;
+                    this.p = p;
+                    this.q = q;
+
+                    _super.call(this, id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                }
+                TorusKnot.prototype._regenerateVertexData = function () {
+                    return BABYLON.VertexData.CreateTorusKnot(this.radius, this.tube, this.radialSegments, this.tubularSegments, this.p, this.q);
+                };
+
+                TorusKnot.prototype.copy = function (id) {
+                    return new TorusKnot(id, this.getEngine(), this.radius, this.tube, this.radialSegments, this.tubularSegments, this.p, this.q, this.canBeRegenerated(), null);
+                };
+                return TorusKnot;
+            })(_Primitive);
+            Primitives.TorusKnot = TorusKnot;
+        })(Geometry.Primitives || (Geometry.Primitives = {}));
+        var Primitives = Geometry.Primitives;
+    })(BABYLON.Geometry || (BABYLON.Geometry = {}));
+    var Geometry = BABYLON.Geometry;
+})(BABYLON || (BABYLON = {}));
+//# sourceMappingURL=babylon.geometry.js.map

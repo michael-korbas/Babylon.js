@@ -93,6 +93,23 @@
             return Array.isArray(obj) ? obj : [obj];
         }
 
+        public static Grep(array, callback, stopOnFirstFound): any {
+            var items = [];
+            var length = array.length;
+
+            for (var i = 0; i < length; i++) {
+                if (callback(array[i])) {
+                    items.push({ element: array[i], index: i });
+
+                    if (stopOnFirstFound) {
+                        break;
+                    }
+                }
+            }
+
+            return items.length > 1 ? items[0] : items;
+        }
+
         // Misc.
         public static GetPointerPrefix(): string {
             var eventPrefix = "pointer";

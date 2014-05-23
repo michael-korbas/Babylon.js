@@ -4,6 +4,7 @@
         public id: string;
         public delayLoadState = BABYLON.Engine.DELAYLOADSTATE_NONE;
         public delayLoadingFile: string;
+        public level: number;
 
         // Private
         private _engine: Engine;
@@ -16,7 +17,7 @@
         private _boundingInfo: BoundingInfo;
         private _delayLoadingFunction: (any, Geometry) => void;
 
-        constructor(id: string, engine: Engine, vertexData?: VertexData, updatable?: boolean, mesh?: Mesh) {
+        constructor(id: string, engine: Engine, vertexData?: VertexData, updatable?: boolean, level?:number) {
             this.id = id;
             this._engine = engine;
             this._meshes = [];
@@ -30,10 +31,7 @@
                 this._indices = [];
             }
 
-            // applyToMesh
-            if (mesh) {
-                this.applyToMesh(mesh);
-            }
+            this.level = level || 0;
         }
 
         public getEngine(): Engine {
@@ -416,7 +414,7 @@
             constructor(id: string, engine: Engine, vertexData?: VertexData, canBeRegenerated?: boolean, mesh?: Mesh) {
                 this._beingRegenerated = true;
                 this._canBeRegenerated = canBeRegenerated;
-                super(id, engine, vertexData, false, mesh); // updatable = false to be sure not to update vertices
+                super(id, engine, vertexData, false); // updatable = false to be sure not to update vertices
                 this._beingRegenerated = false;
             }
 

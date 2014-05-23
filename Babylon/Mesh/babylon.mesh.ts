@@ -72,12 +72,11 @@
         public _physicsFriction: number;
         public _physicRestitution: number;
 
-        // Public
+        // Private
         public _geometry: Geometry;
         public _geometryManager: GeometryManager;
-        public _boundingInfo: BoundingInfo;
 
-        // Private
+        public _boundingInfo: BoundingInfo;
         private _pivotMatrix = BABYLON.Matrix.Identity();
         private _renderId = 0;
         private _onBeforeRenderCallbacks = [];
@@ -89,6 +88,10 @@
             super(name, scene);
 
             scene.meshes.push(this);
+        }
+
+        public createGeometryManager() {
+            this._geometryManager = new GeometryManager(this);
         }
 
         public getBoundingInfo(): BoundingInfo {
@@ -465,7 +468,10 @@
 
                 var scene = this.getScene();
 
-                new BABYLON.Geometry(Geometry.RandomId(), scene.getEngine(), vertexData, updatable, this);
+                var geometry = new BABYLON.Geometry(Geometry.RandomId(), scene.getEngine(), vertexData, updatable);
+                scene.pushGeometry(geometry);
+
+                geometry.applyToMesh(this);
             }
             else {
                 this._geometry.setVerticesData(data, kind, updatable);
@@ -500,7 +506,11 @@
 
                 var scene = this.getScene();
 
-                new BABYLON.Geometry(BABYLON.Geometry.RandomId(), scene.getEngine(), vertexData, false, this);
+                var geometry = new BABYLON.Geometry(BABYLON.Geometry.RandomId(), scene.getEngine(), vertexData, false);
+
+                scene.pushGeometry(geometry);
+
+                geometry.applyToMesh(this);
             }
             else {
                 this._geometry.setIndices(indices);

@@ -1,7 +1,6 @@
-var BABYLON;
-(function (BABYLON) {
+module BABYLON {
     (function () {
-        BABYLON.GeometryTrigger.RegisterTrigger({
+        GeometryTrigger.RegisterTrigger({
             label: "distance",
             run: function (scene, mesh) {
                 if (!this.ranges) {
@@ -32,5 +31,4 @@ var BABYLON;
             }
         });
     })();
-})(BABYLON || (BABYLON = {}));
-//# sourceMappingURL=babylon.distanceGeometryTrigger.js.map
+}

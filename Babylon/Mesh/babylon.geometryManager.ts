@@ -1,11 +1,15 @@
-var BABYLON;
-(function (BABYLON) {
-    var GeometryManager = (function () {
-        function GeometryManager(mesh) {
-            this._triggers = [];
-            this._geometries = [];
-            this._activeGeometryLevelIndex = -1;
-            this._activeLevel = -1;
+module BABYLON {
+    export class GeometryManager {
+        public _mesh: Mesh;
+
+        public _triggers = [];
+
+        public _geometries: Geometry[] = [];
+        public _activeGeometryLevelIndex: number = -1;
+
+        public _activeLevel: number = -1;
+
+        constructor(mesh: Mesh) {
             this._mesh = mesh;
 
             if (mesh._geometry != null) {
@@ -16,14 +20,15 @@ var BABYLON;
                 this.setActiveLevel(geometry.level);
             }
         }
-        GeometryManager.prototype.addTrigger = function (trigger) {
-            this._triggers.push(trigger);
-        };
 
-        GeometryManager.prototype.addGeometryLevel = function (id, vertexData, updatable, level) {
+        public addTrigger(trigger): void {
+            this._triggers.push(trigger);
+        }
+
+        public addGeometryLevel(id, vertexData, updatable, level): void {
             var engine = this._mesh.getScene().getEngine();
 
-            this._geometries.push(new BABYLON.Geometry(id, engine, vertexData, updatable, level));
+            this._geometries.push(new Geometry(id, engine, vertexData, updatable, level));
 
             if (this._activeGeometryLevelIndex !== -1) {
                 return;
@@ -31,9 +36,9 @@ var BABYLON;
 
             this._activeGeometryLevelIndex = 0;
             this._activeLevel = level;
-        };
+        }
 
-        GeometryManager.prototype.getGeometry = function (level) {
+        public getGeometry(level): Geometry {
             if (level === null) {
                 return this._geometries[this._activeGeometryLevelIndex];
             }
@@ -45,9 +50,9 @@ var BABYLON;
             }
 
             return gl.element;
-        };
+        }
 
-        GeometryManager.prototype.setGeometry = function (geometry, level) {
+        public setGeometry(geometry: Geometry, level: number) {
             if (level === null) {
                 if (this._activeGeometryLevelIndex !== -1) {
                     this._geometries[this._activeGeometryLevelIndex] = geometry;
@@ -62,9 +67,9 @@ var BABYLON;
             }
 
             geometryLevel[0].element = geometry;
-        };
+        }
 
-        GeometryManager.prototype.setActiveLevel = function (level) {
+        public setActiveLevel(level): void {
             if (level === this._activeLevel) {
                 return;
             }
@@ -80,20 +85,21 @@ var BABYLON;
 
             geometryLevel.element.removeMeshReference(this._mesh);
             geometryLevel.element.applyToMesh(this._mesh);
-        };
+        }
 
-        GeometryManager.prototype._getGeometry = function (level) {
-            var geometryLevel = BABYLON.Tools.Grep(this._geometries, function (geometryLevel) {
-                if (geometryLevel.level === level) {
-                    return true;
-                }
-                return false;
-            }, true);
+        private _getGeometry(level) {
+            var geometryLevel = Tools.Grep(
+                this._geometries,
+                function (geometryLevel) {
+                    if (geometryLevel.level === level) {
+                        return true;
+                    }
+                    return false;
+                },
+                true
+                );
 
             return geometryLevel.length ? geometryLevel[0] : null;
-        };
-        return GeometryManager;
-    })();
-    BABYLON.GeometryManager = GeometryManager;
-})(BABYLON || (BABYLON = {}));
-//# sourceMappingURL=babylon.geometryManager.js.map
+        }
+    }
+}
