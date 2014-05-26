@@ -411,7 +411,7 @@
             private _beingRegenerated: boolean;
             private _canBeRegenerated: boolean;
 
-            constructor(id: string, engine: Engine, vertexData?: VertexData, canBeRegenerated?: boolean, mesh?: Mesh) {
+            constructor(id: string, engine: Engine, vertexData?: VertexData, canBeRegenerated?: boolean) {
                 this._beingRegenerated = true;
                 this._canBeRegenerated = canBeRegenerated;
                 super(id, engine, vertexData, false); // updatable = false to be sure not to update vertices
@@ -465,10 +465,10 @@
             // Members
             public size: number;
 
-            constructor(id: string, engine: Engine, size: number, canBeRegenerated?: boolean, mesh?: Mesh) {
+            constructor(id: string, engine: Engine, size: number, canBeRegenerated?: boolean) {
                 this.size = size;
 
-                super(id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                super(id, engine, this._regenerateVertexData(), canBeRegenerated);
             }
 
             public _regenerateVertexData(): VertexData {
@@ -476,7 +476,7 @@
             }
 
             public copy(id: string): Geometry {
-                return new Box(id, this.getEngine(), this.size, this.canBeRegenerated(), null);
+                return new Box(id, this.getEngine(), this.size, this.canBeRegenerated());
             }
         }
 
@@ -485,11 +485,11 @@
             public segments: number;
             public diameter: number;
 
-            constructor(id: string, engine: Engine, segments: number, diameter: number, canBeRegenerated?: boolean, mesh?: Mesh) {
+            constructor(id: string, engine: Engine, segments: number, diameter: number, canBeRegenerated?: boolean) {
                 this.segments = segments;
                 this.diameter = diameter;
 
-                super(id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                super(id, engine, this._regenerateVertexData(), canBeRegenerated);
             }
 
             public _regenerateVertexData(): VertexData {
@@ -497,7 +497,7 @@
             }
 
             public copy(id: string): Geometry {
-                return new Sphere(id, this.getEngine(), this.segments, this.diameter, this.canBeRegenerated(), null);
+                return new Sphere(id, this.getEngine(), this.segments, this.diameter, this.canBeRegenerated());
             }
         }
 
@@ -514,7 +514,7 @@
                 this.diameterBottom = diameterBottom;
                 this.tessellation = tessellation;
 
-                super(id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                super(id, engine, this._regenerateVertexData(), canBeRegenerated);
             }
 
             public _regenerateVertexData(): VertexData {
@@ -532,12 +532,12 @@
             public thickness: number;
             public tessellation: number;
 
-            constructor(id: string, engine: Engine, diameter: number, thickness: number, tessellation: number, canBeRegenerated?: boolean, mesh?: Mesh) {
+            constructor(id: string, engine: Engine, diameter: number, thickness: number, tessellation: number, canBeRegenerated?: boolean) {
                 this.diameter = diameter;
                 this.thickness = thickness;
                 this.tessellation = tessellation;
 
-                super(id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                super(id, engine, this._regenerateVertexData(), canBeRegenerated);
             }
 
             public _regenerateVertexData(): VertexData {
@@ -545,7 +545,7 @@
             }
 
             public copy(id: string): Geometry {
-                return new Torus(id, this.getEngine(), this.diameter, this.thickness, this.tessellation, this.canBeRegenerated(), null);
+                return new Torus(id, this.getEngine(), this.diameter, this.thickness, this.tessellation, this.canBeRegenerated());
             }
         }
 
@@ -555,12 +555,12 @@
             public height: number;
             public subdivisions: number;
 
-            constructor(id: string, engine: Engine, width: number, height: number, subdivisions: number, canBeRegenerated?: boolean, mesh?: Mesh) {
+            constructor(id: string, engine: Engine, width: number, height: number, subdivisions: number, canBeRegenerated?: boolean) {
                 this.width = width;
                 this.height = height;
                 this.subdivisions = subdivisions;
 
-                super(id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                super(id, engine, this._regenerateVertexData(), canBeRegenerated);
             }
 
             public _regenerateVertexData(): VertexData {
@@ -568,7 +568,7 @@
             }
 
             public copy(id: string): Geometry {
-                return new Ground(id, this.getEngine(), this.width, this.height, this.subdivisions, this.canBeRegenerated(), null);
+                return new Ground(id, this.getEngine(), this.width, this.height, this.subdivisions, this.canBeRegenerated());
             }
         }
 
@@ -576,10 +576,10 @@
             // Members
             public size: number;
 
-            constructor(id: string, engine: Engine, size: number, canBeRegenerated?: boolean, mesh?: Mesh) {
+            constructor(id: string, engine: Engine, size: number, canBeRegenerated?: boolean) {
                 this.size = size;
 
-                super(id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                super(id, engine, this._regenerateVertexData(), canBeRegenerated);
             }
 
             public _regenerateVertexData(): VertexData {
@@ -600,7 +600,7 @@
             public p: number;
             public q: number;
 
-            constructor(id: string, engine: Engine, radius: number, tube: number, radialSegments: number, tubularSegments: number, p: number, q: number, canBeRegenerated?: boolean, mesh?: Mesh) {
+            constructor(id: string, engine: Engine, radius: number, tube: number, radialSegments: number, tubularSegments: number, p: number, q: number, canBeRegenerated?: boolean) {
                 this.radius = radius;
                 this.tube = tube;
                 this.radialSegments = radialSegments;
@@ -608,7 +608,7 @@
                 this.p = p;
                 this.q = q;
 
-                super(id, engine, this._regenerateVertexData(), canBeRegenerated, mesh);
+                super(id, engine, this._regenerateVertexData(), canBeRegenerated);
             }
 
             public _regenerateVertexData(): VertexData {
@@ -616,7 +616,7 @@
             }
 
             public copy(id: string): Geometry {
-                return new TorusKnot(id, this.getEngine(), this.radius, this.tube, this.radialSegments, this.tubularSegments, this.p, this.q, this.canBeRegenerated(), null);
+                return new TorusKnot(id, this.getEngine(), this.radius, this.tube, this.radialSegments, this.tubularSegments, this.p, this.q, this.canBeRegenerated());
             }
         }
     }

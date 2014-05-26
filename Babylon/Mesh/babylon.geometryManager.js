@@ -78,7 +78,6 @@ var BABYLON;
             this._activeGeometryLevelIndex = geometryLevel.index;
             this._activeLevel = level;
 
-            geometryLevel.element.removeMeshReference(this._mesh);
             geometryLevel.element.applyToMesh(this._mesh);
         };
 
