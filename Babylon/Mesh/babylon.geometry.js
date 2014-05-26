@@ -490,7 +490,7 @@ var BABYLON;
 
             var Cylinder = (function (_super) {
                 __extends(Cylinder, _super);
-                function Cylinder(id, engine, height, diameterTop, diameterBottom, tessellation, canBeRegenerated, mesh) {
+                function Cylinder(id, engine, height, diameterTop, diameterBottom, tessellation, canBeRegenerated) {
                     this.height = height;
                     this.diameterTop = diameterTop;
                     this.diameterBottom = diameterBottom;
@@ -503,7 +503,7 @@ var BABYLON;
                 };
 
                 Cylinder.prototype.copy = function (id) {
-                    return new Cylinder(id, this.getEngine(), this.height, this.diameterTop, this.diameterBottom, this.tessellation, this.canBeRegenerated(), null);
+                    return new Cylinder(id, this.getEngine(), this.height, this.diameterTop, this.diameterBottom, this.tessellation, this.canBeRegenerated());
                 };
                 return Cylinder;
             })(_Primitive);
@@ -561,7 +561,7 @@ var BABYLON;
                 };
 
                 Plane.prototype.copy = function (id) {
-                    return new Plane(id, this.getEngine(), this.size, this.canBeRegenerated(), null);
+                    return new Plane(id, this.getEngine(), this.size, this.canBeRegenerated());
                 };
                 return Plane;
             })(_Primitive);

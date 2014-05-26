@@ -508,7 +508,7 @@
             public diameterBottom: number;
             public tessellation: number;
 
-            constructor(id: string, engine: Engine, height: number, diameterTop: number, diameterBottom: number, tessellation: number, canBeRegenerated?: boolean, mesh?: Mesh) {
+            constructor(id: string, engine: Engine, height: number, diameterTop: number, diameterBottom: number, tessellation: number, canBeRegenerated?: boolean) {
                 this.height = height;
                 this.diameterTop = diameterTop;
                 this.diameterBottom = diameterBottom;
@@ -522,7 +522,7 @@
             }
 
             public copy(id: string): Geometry {
-                return new Cylinder(id, this.getEngine(), this.height, this.diameterTop, this.diameterBottom, this.tessellation, this.canBeRegenerated(), null);
+                return new Cylinder(id, this.getEngine(), this.height, this.diameterTop, this.diameterBottom, this.tessellation, this.canBeRegenerated());
             }
         }
 
@@ -587,7 +587,7 @@
             }
 
             public copy(id: string): Geometry {
-                return new Plane(id, this.getEngine(), this.size, this.canBeRegenerated(), null);
+                return new Plane(id, this.getEngine(), this.size, this.canBeRegenerated());
             }
         }
 
