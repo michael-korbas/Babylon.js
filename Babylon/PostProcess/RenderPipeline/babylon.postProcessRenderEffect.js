@@ -21,12 +21,12 @@ var BABYLON;
             this.parameters = function (effect) {
             };
         }
-        PostProcessRenderEffect.getInstance = function (engine, postProcessType, ratio, samplingMode) {
+        PostProcessRenderEffect.GetInstance = function (engine, postProcessType, ratio, samplingMode) {
             var postProcess;
             var instance;
-            var args = new Array();
+            var args = [];
 
-            var parameters = PostProcessRenderEffect.getParametersNames(postProcessType);
+            var parameters = PostProcessRenderEffect.GetParametersNames(postProcessType);
             for (var i = 0; i < parameters.length; i++) {
                 switch (parameters[i]) {
                     case "name":
@@ -63,7 +63,7 @@ var BABYLON;
             return instance;
         };
 
-        PostProcessRenderEffect.getParametersNames = function (func) {
+        PostProcessRenderEffect.GetParametersNames = function (func) {
             var commentsRegex = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
             var functWithoutComments = eval(func).toString().replace(commentsRegex, '');
 
@@ -100,7 +100,7 @@ var BABYLON;
 
         PostProcessRenderEffect.prototype.getPass = function (passName) {
             for (var renderPassName in this._renderPasses) {
-                if (renderPassName == passName) {
+                if (renderPassName === passName) {
                     return this._renderPasses[passName];
                 }
             }
@@ -113,32 +113,36 @@ var BABYLON;
         };
 
         PostProcessRenderEffect.prototype.attachCameras = function (cameras) {
-            var postProcess = null;
+            var cameraKey;
 
-            cameras = BABYLON.Tools.MakeArray(cameras || this._cameras);
+            var _cam = BABYLON.Tools.MakeArray(cameras || this._cameras);
 
-            for (var i = 0; i < cameras.length; i++) {
+            for (var i = 0; i < _cam.length; i++) {
+                var camera = _cam[i];
+                var cameraName = camera.name;
+
                 if (this._singleInstance) {
-                    postProcess = this._postProcesses[0] || PostProcessRenderEffect.getInstance(this._engine, this._postProcessType, this._ratio, this._samplingMode);
-                    this._postProcesses[0] = postProcess;
+                    cameraKey = 0;
                 } else {
-                    postProcess = this._postProcesses[cameras[i].name] || PostProcessRenderEffect.getInstance(this._engine, this._postProcessType, this._ratio, this._samplingMode);
-                    this._postProcesses[cameras[i].name] = postProcess;
-                }
-                var index = cameras[i].attachPostProcess(postProcess);
-
-                if (this._indicesForCamera[cameras[i].name] == null) {
-                    this._indicesForCamera[cameras[i].name] = [];
+                    cameraKey = cameraName;
                 }
 
-                this._indicesForCamera[cameras[i].name].push(index);
+                this._postProcesses[cameraKey] = this._postProcesses[cameraKey] || PostProcessRenderEffect.GetInstance(this._engine, this._postProcessType, this._ratio, this._samplingMode);
 
-                if (this._cameras.indexOf(cameras[i]) == -1) {
-                    this._cameras[cameras[i].name] = cameras[i];
+                var index = camera.attachPostProcess(this._postProcesses[cameraKey]);
+
+                if (this._indicesForCamera[cameraName] == null) {
+                    this._indicesForCamera[cameraName] = [];
+                }
+
+                this._indicesForCamera[cameraName].push(index);
+
+                if (this._cameras.indexOf(camera) == -1) {
+                    this._cameras[cameraName] = camera;
                 }
 
                 for (var passName in this._renderPasses) {
-                    this._renderPasses[passName].incRefCount();
+                    this._renderPasses[passName]._incRefCount();
                 }
             }
 
@@ -146,22 +150,21 @@ var BABYLON;
         };
 
         PostProcessRenderEffect.prototype.detachCameras = function (cameras) {
-            cameras = BABYLON.Tools.MakeArray(cameras || this._cameras);
+            var _cam = BABYLON.Tools.MakeArray(cameras || this._cameras);
 
-            for (var i = 0; i < cameras.length; i++) {
-                if (this._singleInstance) {
-                    cameras[i].detachPostProcess(this._postProcesses[0], this._indicesForCamera[cameras[i].name]);
-                } else {
-                    cameras[i].detachPostProcess(this._postProcesses[cameras[i].name], this._indicesForCamera[cameras[i].name]);
-                }
+            for (var i = 0; i < _cam.length; i++) {
+                var camera = _cam[i];
+                var cameraName = camera.Name;
 
-                var index = this._cameras.indexOf(cameras[i].name);
+                camera.detachPostProcess(this._postProcesses[this._singleInstance ? 0 : cameraName], this._indicesForCamera[cameraName]);
+
+                var index = this._cameras.indexOf(cameraName);
 
                 this._indicesForCamera.splice(index, 1);
                 this._cameras.splice(index, 1);
 
                 for (var passName in this._renderPasses) {
-                    this._renderPasses[passName].decRefCount();
+                    this._renderPasses[passName]._decRefCount();
                 }
             }
         };
@@ -181,7 +184,7 @@ var BABYLON;
                 }
 
                 for (var passName in this._renderPasses) {
-                    this._renderPasses[passName].incRefCount();
+                    this._renderPasses[passName]._incRefCount();
                 }
             }
         };
@@ -197,7 +200,7 @@ var BABYLON;
                 }
 
                 for (var passName in this._renderPasses) {
-                    this._renderPasses[passName].decRefCount();
+                    this._renderPasses[passName]._decRefCount();
                 }
             }
         };
@@ -207,11 +210,11 @@ var BABYLON;
         };
 
         PostProcessRenderEffect.prototype._linkParameters = function () {
-            var that = this;
+            var _this = this;
             for (var index in this._postProcesses) {
                 this._postProcesses[index].onApply = function (effect) {
-                    that.parameters(effect);
-                    that._linkTextures(effect);
+                    _this.parameters(effect);
+                    _this._linkTextures(effect);
                 };
             }
         };

@@ -7,7 +7,7 @@ module BABYLON {
         }
 
         public addPipeline(renderPipeline: PostProcessRenderPipeline): void {
-            this._renderPipelines[renderPipeline.name] = renderPipeline;
+            this._renderPipelines[renderPipeline._name] = renderPipeline;
         }
 
         public attachCamerasToRenderPipeline(renderPipelineName: string, cameras, unique): void {
