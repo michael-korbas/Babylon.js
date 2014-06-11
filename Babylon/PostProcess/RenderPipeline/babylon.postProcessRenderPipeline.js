@@ -59,21 +59,20 @@ var BABYLON;
             }
         };
 
-        // todo
         PostProcessRenderPipeline.prototype.detachCameras = function (cameras) {
-            cameras = BABYLON.Tools.MakeArray(cameras || this._cameras);
+            var _cam = BABYLON.Tools.MakeArray(cameras || this._cameras);
 
             for (var renderEffectName in this._renderEffects) {
-                this._renderEffects[renderEffectName]._detachCameras(cameras);
+                this._renderEffects[renderEffectName]._detachCameras(_cam);
             }
 
-            for (var i = 0; i < cameras.length; i++) {
-                this._cameras.splice(this._cameras.indexOf(cameras[i]), 1);
+            for (var i = 0; i < _cam.length; i++) {
+                this._cameras.splice(this._cameras.indexOf(_cam[i]), 1);
             }
         };
 
         PostProcessRenderPipeline.prototype.enableDisplayOnlyPass = function (passName, cameras) {
-            cameras = BABYLON.Tools.MakeArray(cameras || this._cameras);
+            var _cam = BABYLON.Tools.MakeArray(cameras || this._cameras);
 
             var pass = null;
 
@@ -90,29 +89,29 @@ var BABYLON;
             }
 
             for (var renderEffectName in this._renderEffects) {
-                this._renderEffects[renderEffectName]._disable(cameras);
+                this._renderEffects[renderEffectName]._disable(_cam);
             }
 
             pass._name = PostProcessRenderPipeline.PASS_SAMPLER_NAME;
 
-            for (var i = 0; i < cameras.length; i++) {
-                this._renderEffectsForIsolatedPass[cameras[i].name] = this._renderEffectsForIsolatedPass[cameras[i].name] || new BABYLON.PostProcessRenderEffect(this._engine, PostProcessRenderPipeline.PASS_EFFECT_NAME, "BABYLON.DisplayPassPostProcess", 1.0, null, null);
-                this._renderEffectsForIsolatedPass[cameras[i].name].emptyPasses();
-                this._renderEffectsForIsolatedPass[cameras[i].name].addPass(pass);
-                this._renderEffectsForIsolatedPass[cameras[i].name]._attachCameras(cameras[i]);
+            for (var i = 0; i < _cam.length; i++) {
+                this._renderEffectsForIsolatedPass[_cam[i].name] = this._renderEffectsForIsolatedPass[_cam[i].name] || new BABYLON.PostProcessRenderEffect(this._engine, PostProcessRenderPipeline.PASS_EFFECT_NAME, "BABYLON.DisplayPassPostProcess", 1.0, null, null);
+                this._renderEffectsForIsolatedPass[_cam[i].name].emptyPasses();
+                this._renderEffectsForIsolatedPass[_cam[i].name].addPass(pass);
+                this._renderEffectsForIsolatedPass[_cam[i].name]._attachCameras(_cam[i]);
             }
         };
 
         PostProcessRenderPipeline.prototype.disableDisplayOnlyPass = function (cameras) {
-            cameras = BABYLON.Tools.MakeArray(cameras || this._cameras);
+            var _cam = BABYLON.Tools.MakeArray(cameras || this._cameras);
 
-            for (var i = 0; i < cameras.length; i++) {
-                this._renderEffectsForIsolatedPass[cameras[i].name] = this._renderEffectsForIsolatedPass[cameras[i].name] || new BABYLON.PostProcessRenderEffect(this._engine, PostProcessRenderPipeline.PASS_EFFECT_NAME, "BABYLON.DisplayPassPostProcess", 1.0, null, null);
-                this._renderEffectsForIsolatedPass[cameras[i].name]._disable(cameras[i]);
+            for (var i = 0; i < _cam.length; i++) {
+                this._renderEffectsForIsolatedPass[_cam[i].name] = this._renderEffectsForIsolatedPass[_cam[i].name] || new BABYLON.PostProcessRenderEffect(this._engine, PostProcessRenderPipeline.PASS_EFFECT_NAME, "BABYLON.DisplayPassPostProcess", 1.0, null, null);
+                this._renderEffectsForIsolatedPass[_cam[i].name]._disable(_cam[i]);
             }
 
             for (var renderEffectName in this._renderEffects) {
-                this._renderEffects[renderEffectName]._enable(cameras);
+                this._renderEffects[renderEffectName]._enable(_cam);
             }
         };
 

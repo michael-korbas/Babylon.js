@@ -180,7 +180,7 @@ module BABYLON {
                 var camera = _cam[i];
                 var cameraName = camera.Name;
 
-                camera.detachPostProcess(this._postProcesses[], this._indicesForCamera[cameraName]);
+                camera.detachPostProcess(this._postProcesses[this._singleInstance ? 0 : cameraName], this._indicesForCamera[cameraName]);
 
                 var index = this._cameras.indexOf(cameraName);
 
